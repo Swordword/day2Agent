@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D1 · 模型调用基线</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 1 · 约 2 小时</p>
+  <h1>一次调用，四个数字</h1>
+  <p class="lead">今天的胜利不是“模型回复了”，而是 Python 与 TypeScript 都能重复运行，并留下可比较的耗时与 Token 数据。</p>
+
+  <section class="card">
+    <p class="meta">完成标准</p>
+    <ul class="checklist">
+      <li>Python 3.12 与 Node 双端调用成功</li>
+      <li>记录 latency、input、output、total tokens</li>
+      <li>完成三道闭卷解释和五个 12 周目标</li>
+      <li>密钥只在 <code>.env</code>，Git 不追踪它</li>
+    </ul>
+  </section>
+
+  <h2>1. 心智模型</h2>
+  <p>一次模型调用可以先看作前端熟悉的远程函数调用：</p>
+  <pre>输入 + 配置 → 网络请求 → 模型计算 → 输出 + usage</pre>
+  <p>但它比普通 <code>fetch()</code> 多三个重要变量：输出并非完全确定；输入和输出会占用 Token；模型与推理配置会显著改变质量、耗时和成本。因此，Agent 的每一步以后都必须可观察。</p>
+
+  <h2>2. 先做闭卷基线（15 分钟）</h2>
+  <p>打开根目录的 <code>baseline.md</code>，先回答 temperature、上下文窗口、输入/输出 Token。不会也要写当前猜测；基线的价值正是暴露盲区。</p>
+
+  <h2>3. 配置环境（25 分钟）</h2>
+  <pre>cp .env.example .env
+# 编辑 .env，填写本地 API key
+
+uv sync --python 3.12
+pnpm install</pre>
+  <p><code>.env</code> 已被 Git 忽略。提交前仍要运行 <code>git status</code>，确认密钥没有进入版本控制。</p>
+
+  <h2>4. 跑同一个实验（40 分钟）</h2>
+  <pre>uv run python labs/w1d1/model_call.py
+pnpm w1d1:ts</pre>
+  <p>两段代码使用同一模型、同一输入和相同指标。把结果写入 <code>baseline.md</code>，然后各再运行两次。观察：Token 是否相同？耗时是否相同？不要急着下结论。</p>
+
+  <h2>5. 四个数字分别回答什么</h2>
+  <table>
+    <thead><tr><th>指标</th><th>回答的问题</th></tr></thead>
+    <tbody>
+      <tr><td>latency_ms</td><td>用户等了多久？</td></tr>
+      <tr><td>input_tokens</td><td>本轮给模型多少上下文？</td></tr>
+      <tr><td>output_tokens</td><td>模型生成了多少内容？</td></tr>
+      <tr><td>total_tokens</td><td>这次文本用量的总规模是多少？</td></tr>
+    </tbody>
+  </table>
+  <p class="answer">注意：Token 不是字符数，也不直接等于费用。费用还取决于模型、缓存、工具等计费项。今天只建立测量习惯，不背价格。</p>
+
+  <h2>6. 费曼检验（15 分钟）</h2>
+  <p>不看上文，用不超过 150 字向前端同事解释：“一次模型调用为什么不只是 <code>fetch()</code>？”写入 <code>baseline.md</code>。如果解释里没有“不确定性、Token、耗时”中的至少两个，重新组织一次。</p>
+
+  <h2>7. 今天的交付（25 分钟）</h2>
+  <ol>
+    <li>填写双端调用表。</li>
+    <li>列出 12 周后希望独立完成的五件事。</li>
+    <li>记录一个真实失败及修复过程。</li>
+    <li>运行 <code>pnpm typecheck</code> 与 <code>git status</code>。</li>
+  </ol>
+
+  <h2>检索练习</h2>
+  <p>合上页面回答：</p>
+  <ol>
+    <li>为什么只记录总 Token 不够？</li>
+    <li>为什么同一请求要运行多次？</li>
+    <li><code>.env.example</code> 与 <code>.env</code> 的职责有什么不同？</li>
+  </ol>
+
+  <h2>首选资料</h2>
+  <p>先读官方 <a href="https://developers.openai.com/api/docs/quickstart">OpenAI API Quickstart</a>。模型选择与上下文信息以 <a href="https://developers.openai.com/api/docs/models">Models 文档</a>为准。</p>
+  <p>任何一步看不懂、运行失败或结果异常，都直接把命令与完整错误发给我；我会按错误现场继续教。</p>
+</main>
+</body>
+</html>

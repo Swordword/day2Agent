@@ -1,0 +1,19 @@
+{
+  "name": "agent-learning",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "w1d1:ts": "tsx labs/w1d1/model-call.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^17.0.0",
+    "openai": "^6.48.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@8.15.7"
+}
