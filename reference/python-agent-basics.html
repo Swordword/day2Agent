@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Python Agent 后端最小语法参考</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Quick Reference · W1D2</p>
+  <h1>Python Agent 后端最小语法</h1>
+  <p class="lead">快速查语法，不替代闭卷回忆。先尝试，再查这里。</p>
+
+  <h2>类型注解</h2>
+  <pre>def label(name: str, version: int) -> str:
+    return f"{name}@{version}"
+
+items: list[str] = ["search"]
+maybe_timeout: int | None = None</pre>
+  <p>注解主要服务类型检查器、IDE 和读者；Python 运行时默认不强制执行。</p>
+
+  <h2>生成器</h2>
+  <pre>from collections.abc import Iterator
+
+def names(items: list[str]) -> Iterator[str]:
+    for item in items:
+        yield item.upper()</pre>
+
+  <h2>Pydantic 模型</h2>
+  <pre>from pydantic import BaseModel, Field
+
+class Task(BaseModel):
+    prompt: str = Field(min_length=1)
+    timeout_ms: int | None = Field(default=None, gt=0)</pre>
+
+  <h2>异步、超时与并发限制</h2>
+  <pre>async with semaphore:
+    try:
+        async with asyncio.timeout(seconds):
+            value = await operation()
+    except TimeoutError:
+        ...</pre>
+  <p><code>asyncio.Semaphore(n)</code> 限制同时进入临界区的任务数；它不等于批次数量，也不创建线程。</p>
+
+  <h2>异常边界</h2>
+  <pre>try:
+    ...
+except TimeoutError:
+    ...
+except ValueError as exc:
+    ...
+except Exception:
+    raise</pre>
+  <p>优先捕获具体异常。未知异常通常应记录后继续抛出，而不是静默吞掉。</p>
+</main>
+</body>
+</html>

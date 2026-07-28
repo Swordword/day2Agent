@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D2 · Python 类型、异步与数据模型</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 2 · 约 2 小时</p>
+  <h1>把外部数据安全地并发处理</h1>
+  <p class="lead">今天不追求 Python 语法大全。目标是把前端已有的类型与 Promise 心智模型，迁移成 Agent 后端最常用的验证、异步、超时和并发限制。</p>
+
+  <section class="card">
+    <p class="meta">今日可验证成果</p>
+    <ul class="checklist">
+      <li>能解释 Python 类型注解为什么不是运行时验证</li>
+      <li>能把 TypeScript interface 改写成 Pydantic 模型</li>
+      <li>能实现限制并发、处理超时的异步批量模拟器</li>
+      <li>全部 7 个测试通过，并完成 200 字异同解释</li>
+    </ul>
+  </section>
+
+  <h2>0. D1 检索热身（10 分钟）</h2>
+  <p>先填写 <code>notes/W1D2.md</code> 的两个问题，不看昨日笔记。今天的评分会检查这一步。</p>
+
+  <h2>1. 类型注解不是防火墙（20 分钟）</h2>
+  <p>Python 官方文档明确指出：运行时默认不强制执行函数和变量的类型注解。它更接近给 IDE、类型检查器和协作者看的契约。来自 HTTP、模型或配置文件的数据仍需运行时验证。</p>
+  <p>完成 <code>types_and_models.py</code> 的 TODO 1。先从空白处亲手补类型，不照抄昨天代码。</p>
+
+  <h2>2. 从 interface 到 Pydantic（25 分钟）</h2>
+  <p>TypeScript interface 在编译阶段描述形状，但进入程序的 JSON 仍可能不符合它。Pydantic 的模型实例化会解析并验证数据，适合守住 Agent 的外部输入和结构化模型输出边界。</p>
+  <p>完成 TODO 2，再故意传入空 prompt、priority=4 和未知字段，观察验证错误。</p>
+
+  <h2>3. 生成器：一次产生一个结果（10 分钟）</h2>
+  <p>完成 TODO 3。把“先构造完整数组再返回”改成使用 <code>yield</code> 逐项产生摘要。今天只掌握消费方式和惰性生成，不深入生成器内部协议。</p>
+
+  <h2>4. async 不等于自动并发（40 分钟）</h2>
+  <p><code>async def</code> 调用后产生协程；只有被 <code>await</code> 或安排为任务，它才会推进。用 <code>gather</code> 组织多个任务，用 Semaphore 限制同时占用外部资源的任务数，用 timeout 给每次调用设置边界。</p>
+  <p>完成 <code>async_batch.py</code> 的两个 TODO。不要用真实模型 API，先让模拟器的行为可测。</p>
+
+  <h2>5. 自动反馈（15 分钟）</h2>
+  <pre>uv sync --python 3.12
+uv run pytest labs/w1d2/test_w1d2.py -q</pre>
+  <p>先记录第一次通过数，再逐项修复，直到 7 项全部通过。不要修改测试来制造通过。</p>
+
+  <h2>6. 费曼复述与评分（20 分钟）</h2>
+  <p>在 <code>notes/W1D2.md</code> 中用不超过 200 字解释 Python async 与 Promise 的异同，并完成费曼卡片。之后告诉我“W1D2 作业完成”，我会先检查代码，再闭卷提问并按五维量表评分。</p>
+
+  <h2>首选资料</h2>
+  <ul>
+    <li><a href="https://docs.python.org/3.12/library/typing.html">Python 3.12 typing</a></li>
+    <li><a href="https://docs.python.org/3.12/library/asyncio.html">Python 3.12 asyncio</a></li>
+    <li><a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic Models</a></li>
+  </ul>
+  <p>卡住时先发送：执行命令、完整错误、你认为错误发生在哪一层。我会给提示，不直接替你完成 TODO。</p>
+  <p><a href="../reference/python-agent-basics.html">打开语法速查表</a> · <a href="0001-w1d1-model-call-baseline.html">返回 W1D1</a></p>
+</main>
+</body>
+</html>

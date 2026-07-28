@@ -12,6 +12,14 @@
   单调高精度计时器的官方说明。用于：Python 调用耗时测量。
 - [Node.js Performance Measurement APIs](https://nodejs.org/api/perf_hooks.html)
   Node 高精度性能测量 API。用于：TypeScript 调用耗时测量。
+- [Python 3.12 `typing`](https://docs.python.org/3.12/library/typing.html)
+  Python 类型注解的官方参考。用于：W1D2 类型注解、生成器与协程返回类型。
+- [Python 3.12 `asyncio`](https://docs.python.org/3.12/library/asyncio.html)
+  Python 异步 I/O 的官方入口。用于：W1D2 并发、超时与任务调度。
+- [Python 3.12 `dataclasses`](https://docs.python.org/3.12/library/dataclasses.html)
+  标准库数据类的官方说明。用于：对比普通类、dataclass 与 Pydantic。
+- [Pydantic Models](https://docs.pydantic.dev/latest/concepts/models/)
+  `BaseModel`、数据验证、转换和序列化的官方说明。用于：把 TypeScript interface 改写成可运行时验证的 Python 模型。
 
 ## Wisdom (Communities)
 
