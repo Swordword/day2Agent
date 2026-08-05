@@ -7,14 +7,16 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from collections.abc import Iterator
 
-def format_model_label(name, version):
+
+def format_model_label(name: str, version:int) -> str:
     """TODO 1：补全参数与返回值类型注解，不改变函数行为。"""
     return f"{name}@{version}"
 
 
 # 对照来源：
-#
+
 # interface AgentTask {
 #   id: string;
 #   prompt: string;
@@ -24,12 +26,12 @@ def format_model_label(name, version):
 # }
 
 
-class AgentTask:
-    id: str
-    prompt: str
-    priority: Literal[1, 2, 3]
-    tools: list[str]
-    timeout_ms: int | None = None
+# class AgentTask:
+#     id: str
+#     prompt: str
+#     priority: Literal[1, 2, 3]
+#     tools: list[str]
+#     timeout_ms: int | None = None
 
 
 class AgentTask(BaseModel):
@@ -46,13 +48,17 @@ class AgentTask(BaseModel):
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    # TODO：在这里定义字段
-    pass
+    id: str = Field(..., description="The ID of the task")
+    prompt: str = Field(..., min_length=1, description="The prompt of the task")
+    priority: Literal[1, 2, 3] = Field(..., description="The priority of the task")
+    tools: list[str] = Field(..., description="The tools of the task")
+    timeout_ms: int | None = Field(None, alias="timeoutMs", gt=0, description="The timeout of the task")
 
 
-def task_summaries(tasks):
+def task_summaries(tasks: list[AgentTask]) -> Iterator[str]:
     """TODO 3：补全类型注解，并将它改成逐个 yield 摘要的生成器。
 
     每项格式："{id}: {prompt}"
     """
-    raise NotImplementedError
+    for task in tasks:
+        yield f"{task.id}: {task.prompt}"
