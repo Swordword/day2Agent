@@ -37,8 +37,22 @@ async def run_one(
 
     elapsed_ms 必须记录每个任务自身的执行耗时。
     """
-    raise NotImplementedError
-
+    async with semaphore:
+        started_at = perf_counter()
+        try:
+            async with asyncio.timeout(timeout):
+                await fake_model_call(name, delay)
+                status = "ok"
+                error = None
+        except asyncio.TimeoutError:
+            status = "timeout"
+            error = None
+        except Exception as e:
+            status = "error"
+            error = str(e)
+        elapsed_ms = round((perf_counter() - started_at) * 1000)
+    return CallResult(name, status, elapsed_ms, error)
+    
 
 async def run_batch(
     jobs: list[tuple[str, float]],
@@ -53,14 +67,22 @@ async def run_batch(
     - 返回结果顺序与 jobs 输入顺序一致；
     - 一个任务失败不能中断其他任务。
     """
-    raise NotImplementedError
+    if max_concurrency < 1:
+        raise ValueError("max_concurrency 必须大于 0")
+
+    semaphore = asyncio.Semaphore(max_concurrency)
+    
+    tasks = [run_one(name, delay, semaphore=semaphore, timeout=timeout) for name, delay in jobs]
+
+    return await asyncio.gather(*tasks)
+    
 
 
 async def main() -> None:
     jobs = [("fast", 0.05), ("slow", 0.3), ("broken", -1), ("normal", 0.1)]
     results = await run_batch(jobs, max_concurrency=2, timeout=0.2)
     for result in results:
-        print(result)
+        print('result:', result)
 
 
 if __name__ == "__main__":
