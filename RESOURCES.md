@@ -20,6 +20,10 @@
   标准库数据类的官方说明。用于：对比普通类、dataclass 与 Pydantic。
 - [Pydantic Models](https://docs.pydantic.dev/latest/concepts/models/)
   `BaseModel`、数据验证、转换和序列化的官方说明。用于：把 TypeScript interface 改写成可运行时验证的 Python 模型。
+- [OpenAI Model Guidance](https://developers.openai.com/api/docs/guides/latest-model)
+  官方上下文管理与 Token 效率建议。用于：W1D3 理解手动维护历史、精简重复指令和上下文成本。
+- [OpenAI Models](https://developers.openai.com/api/docs/models)
+  官方模型能力与上下文窗口信息。用于：W1D3 区分模型容量、输入预算和实际用量。
 
 ## Wisdom (Communities)
 

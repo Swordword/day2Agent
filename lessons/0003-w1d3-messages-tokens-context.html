@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D3 · 消息、Token 与上下文</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 3 · 约 2 小时</p>
+  <h1>把对话历史变成有预算的程序输入</h1>
+  <p class="lead">今天的成果不是“会删聊天记录”，而是写出一个可测试的上下文管理器：识别消息角色、为输出预留空间、保留系统约束和最近历史。</p>
+
+  <section class="card">
+    <p class="meta">今日可验证成果</p>
+    <ul class="checklist">
+      <li>能解释 system、user、assistant、tool 的职责</li>
+      <li>完成 <code>context_manager.py</code> 的 3 个 TODO</li>
+      <li>7 项测试全部通过</li>
+      <li>完成 5 个变量实验与费曼卡片</li>
+    </ul>
+  </section>
+
+  <h2>0. W1D2 闭卷热身（10 分钟）</h2>
+  <p>先填写 <code>notes/W1D3.md</code> 的两题，不看旧笔记。重点检索“并发/并行”和异常隔离原因。</p>
+
+  <h2>1. 消息是带角色的输入（15 分钟）</h2>
+  <p><code>system</code> 放应用级规则，<code>user</code> 表达用户请求，<code>assistant</code> 保存模型先前输出，<code>tool</code> 把工具执行结果送回模型。角色会影响指令层级和一段内容在对话中的意义。</p>
+  <p>先填写四种角色的一句话解释，再阅读 <code>Message</code> 模型。注意：<code>token_count</code> 是实验中已测得的数据，不是字符数。</p>
+
+  <h2>2. 先给输出留座位（15 分钟）</h2>
+  <p>上下文容量同时容纳输入和输出。若容量为 100、预留输出为 20，则历史消息只能使用 80。预留不是本次实际输出用量，而是为可能生成的输出留下容量。</p>
+
+  <h2>3. 实现最近历史裁剪（45 分钟）</h2>
+  <p>完成 <code>context_manager.py</code> 的 TODO 1～3。策略固定为：保留全部 system 消息，然后从新到旧连续选择能放入预算的非 system 消息，最后恢复时间顺序。</p>
+  <p>这里采用简单策略学习边界；生产系统还可能按完整对话轮次、摘要、消息重要性或工具调用配对来裁剪。</p>
+
+  <h2>4. 自动反馈（15 分钟）</h2>
+  <pre>uv run pytest labs/w1d3/test_w1d3.py -q</pre>
+  <p>测试失败时先读测试名，再打印实际返回值。不要修改测试来制造通过。</p>
+
+  <h2>5. 五个变量实验（20 分钟）</h2>
+  <p>在测试数据或临时脚本中依次改变：输入预算、system 长度、最新 user 长度、预留输出量，以及某条旧消息长度。每次先写预测，再运行并记录实际结果。</p>
+
+  <h2>6. 费曼复述与评分（15 分钟）</h2>
+  <p>完成 <code>notes/W1D3.md</code> 的费曼卡片和复盘，然后告诉我“TODO 1 已完成”或贴出完整错误。全部完成后我会检查产物、闭卷提问，并按五维量表评分。</p>
+
+  <h2>首选资料</h2>
+  <ul>
+    <li><a href="https://developers.openai.com/api/docs/guides/latest-model">OpenAI Model Guidance</a></li>
+    <li><a href="https://developers.openai.com/api/docs/models">OpenAI Models：上下文窗口</a></li>
+  </ul>
+  <p>卡住时发送：正在做哪个 TODO、运行命令、完整错误、你的预测。我会优先给最小提示。</p>
+  <p><a href="0002-w1d2-python-types-async-models.html">返回 W1D2</a> · <a href="../reference/python-agent-basics.html">Python 速查表</a></p>
+</main>
+</body>
+</html>
