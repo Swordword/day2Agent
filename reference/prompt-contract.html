@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt 接口契约速查</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Reference · Prompt Engineering</p>
+  <h1>Prompt 接口契约速查</h1>
+  <p class="lead">一个可测试 Prompt 需要明确“做什么、凭什么做、不能做什么、怎样算完成”。</p>
+
+  <table>
+    <thead><tr><th>契约部分</th><th>Prompt 中的问题</th><th>前端类比</th></tr></thead>
+    <tbody>
+      <tr><td>角色 / 目标</td><td>模型负责完成什么任务？</td><td>函数职责</td></tr>
+      <tr><td>输入</td><td>会收到哪些业务信息？</td><td>参数类型</td></tr>
+      <tr><td>约束</td><td>哪些内容禁止猜测或越界？</td><td>前置条件</td></tr>
+      <tr><td>输出格式</td><td>结果必须有哪些区块？</td><td>返回类型</td></tr>
+      <tr><td>验收标准</td><td>怎样判断结果合格？</td><td>测试断言</td></tr>
+      <tr><td>示例</td><td>哪些难以言明的边界需要演示？</td><td>测试样例 / Story</td></tr>
+    </tbody>
+  </table>
+
+  <section class="card">
+    <p class="meta">实验纪律</p>
+    <p>一次只改变 Prompt 版本，固定模型、参数、测试输入和评分规则。先写预期，再运行；不要看完输出后修改评分标准。</p>
+  </section>
+
+  <h2>三个常见误区</h2>
+  <ul>
+    <li>长 Prompt 不等于好 Prompt：重复规则会增加成本，也可能制造冲突。</li>
+    <li>few-shot 不保证更好：示例只有在编码产品要求或修复已测失败时才值得保留。</li>
+    <li>文字相同不等于稳定：稳定应看关键验收项是否重复通过。</li>
+  </ul>
+
+  <p><a href="../lessons/0004-w1d4-testable-prompts.html">返回 W1D4</a></p>
+</main>
+</body>
+</html>

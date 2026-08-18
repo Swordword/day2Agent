@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D4 · 可测试 Prompt</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 4 · 约 2 小时</p>
+  <h1>把 Prompt 写成可测试的接口契约</h1>
+  <p class="lead">今天你会把自然语言需求转换成前端任务，用同一批用例比较 zero-shot 与 few-shot。最终判断依据不是措辞是否漂亮，而是固定验收项是否通过。</p>
+
+  <section class="card">
+    <p class="meta">今日可验证成果</p>
+    <ul class="checklist">
+      <li>完成 zero-shot、few-shot 两版 Prompt</li>
+      <li>7 项本地契约测试通过</li>
+      <li>完成 10 条测试输入的盲评</li>
+      <li>比较正确率、稳定通过率和 Token</li>
+      <li>完成 150 字费曼卡片与每日评分</li>
+    </ul>
+  </section>
+
+  <h2>0. W1D3 闭卷热身（8 分钟）</h2>
+  <p>先填写 <code>notes/W1D4.md</code> 的两题。它会复习 Token 算术，并暴露“单条裁剪可能拆散工具调用”的问题。</p>
+
+  <h2>1. 先写契约，不先堆措辞（15 分钟）</h2>
+  <p>在笔记中定义角色/目标、输入、硬约束、输出格式和验收标准。Prompt 的作用类似函数接口：它不能保证实现永远正确，但能让调用者和评测者知道什么结果算合格。</p>
+
+  <h2>2. Zero-shot：不给示例（20 分钟）</h2>
+  <p>完成 <code>prompts.py</code> 的 TODO 1。要求模型输出前端任务、验收标准和待确认问题；缺少后端契约或业务规则时不得自行补齐。</p>
+
+  <h2>3. Few-shot：只加一个有目的的示例（20 分钟）</h2>
+  <p>完成 TODO 2。示例必须纠正一个具体边界，例如“需求含糊时提出问题，而不是编造 API”。除示例外，两版契约尽量一致，才能做公平对照。</p>
+
+  <h2>4. 自动反馈（10 分钟）</h2>
+  <pre>uv run pytest labs/w1d4/test_w1d4.py -q</pre>
+  <p>这些测试只能证明 Prompt 包含必要契约，不能证明模型输出语义正确；后者由固定用例与评分表负责。</p>
+
+  <h2>5. 十条用例与重复实验（35 分钟）</h2>
+  <p>固定模型和参数，分别运行 10 条输入。先按 4 项规则盲评，再选 3 条输入，每版重复 3 次。稳定性看验收项的重复通过率，不要求文字完全相同。</p>
+  <pre>uv run python -m labs.w1d4.run_experiment \
+  --output labs/w1d4/results/all-cases.jsonl
+
+uv run python -m labs.w1d4.run_experiment \
+  --cases 2,5,10 --repeats 3 \
+  --output labs/w1d4/results/repeated-cases.jsonl</pre>
+  <p>第一条命令共调用 20 次，第二条共调用 18 次，会产生 API 用量。先完成 Prompt 和本地测试，再决定运行；可先用 <code>--cases 1</code> 做两次冒烟调用。</p>
+
+  <h2>6. 费曼复述与评分（12 分钟）</h2>
+  <p>完成笔记中的约 150 字卡片和复盘。全部完成后，我会检查代码、评测记录并按每日五维量表评分。</p>
+
+  <h2>首选资料</h2>
+  <ul>
+    <li><a href="https://developers.openai.com/api/docs/guides/latest-model">OpenAI Model Guidance：Prompting best practices</a></li>
+    <li><a href="https://platform.openai.com/docs/guides/evals">OpenAI Evals：固定标准与代表性用例</a></li>
+  </ul>
+  <p>官方建议保留目标、上下文、硬约束和成功标准，并在代表性任务上重新评测 Prompt 修改；示例应编码产品要求或修复已测缺口，而不是无目的堆叠。</p>
+  <p>卡住时告诉我 TODO 编号、你的意图和测试错误。我会先给最小提示。</p>
+  <p><a href="0003-w1d3-messages-tokens-context.html">返回 W1D3</a> · <a href="../reference/prompt-contract.html">Prompt 契约速查</a></p>
+</main>
+</body>
+</html>

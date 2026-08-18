@@ -24,6 +24,10 @@
   官方上下文管理与 Token 效率建议。用于：W1D3 理解手动维护历史、精简重复指令和上下文成本。
 - [OpenAI Models](https://developers.openai.com/api/docs/models)
   官方模型能力与上下文窗口信息。用于：W1D3 区分模型容量、输入预算和实际用量。
+- [OpenAI Model Guidance](https://developers.openai.com/api/docs/guides/latest-model)
+  官方 Prompt 最佳实践：保留任务目标、上下文、硬约束和成功标准，并用代表性评测集验证修改。用于：W1D4 Prompt 契约与对照实验。
+- [OpenAI Evals](https://platform.openai.com/docs/guides/evals)
+  官方评测指南。用于：W1D4 将“感觉更好”改成固定用例、固定标准和可重复运行的比较。
 
 ## Wisdom (Communities)
 
