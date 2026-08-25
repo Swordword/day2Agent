@@ -41,7 +41,9 @@ def main() -> None:
         raise SystemExit("缺少 OPENAI_API_KEY")
 
     model = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
-    client = OpenAI()
+    # A learning experiment must fail visibly instead of waiting indefinitely
+    # on one provider request and blocking all later measurements.
+    client = OpenAI(timeout=60.0, max_retries=0)
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     with args.output.open("w", encoding="utf-8") as output_file:
