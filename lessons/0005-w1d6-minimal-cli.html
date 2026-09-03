@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D6 · 最小 CLI 应用</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 6 · 约 2 小时</p>
+  <h1>把结构化输出装进一个可用的 CLI</h1>
+  <p class="lead">今天把 W1D5 的模型调用、解析、校验和重试组织成一个可交互的需求澄清助手。重点不是堆功能，而是划清交互层、业务流程和模型适配层的边界。</p>
+
+  <section class="card">
+    <p class="meta">今日可验证成果</p>
+    <ul class="checklist">
+      <li>能拒绝空需求并清理用户输入</li>
+      <li>能把原始需求、问题答案和修改意见合并为下一轮输入</li>
+      <li>能区分模型草稿和用户确认后的最终结果</li>
+      <li>交互层不直接承担解析、校验和重试细节</li>
+      <li>至少 5 个 CLI 纯函数测试通过</li>
+      <li>完成日志、配置和错误处理的最小设计</li>
+    </ul>
+  </section>
+
+  <h2>0. W1D5 闭卷热身（10 分钟）</h2>
+  <p>先在 <a href="../notes/W1D6.md"><code>notes/W1D6.md</code></a> 回答两题：</p>
+  <ol>
+    <li><code>json.loads</code>、<code>Requirement.model_validate</code> 和 <code>request_requirement</code> 分别负责什么？</li>
+    <li>为什么没有 <code>open_questions</code> 也不能直接视为最终结果？</li>
+  </ol>
+
+  <h2>1. 先看完整链路（15 分钟）</h2>
+  <pre>用户输入
+  → 输入校验
+  → Prompt
+  → 模型调用
+  → JSON 提取与解析
+  → Pydantic 校验
+  → 展示草稿和待确认问题
+  → 收集答案与修改意见
+  → 再次分析
+  → 用户确认
+  → 输出最终任务</pre>
+  <p>CLI 的职责是组织这条流程和与用户交互。W1D5 的 <code>request_requirement()</code> 已经负责结构化输出和有界重试，W1D6 不应复制这部分逻辑。</p>
+
+  <h2>2. CLI 不是一段大函数（15 分钟）</h2>
+  <p>把程序分为四类职责：</p>
+  <table>
+    <thead>
+      <tr><th>职责</th><th>负责内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>输入层</td><td>读取命令行参数和用户输入，拒绝空需求</td></tr>
+      <tr><td>领域流程</td><td>决定分析、提问、修改、确认的顺序</td></tr>
+      <tr><td>模型适配</td><td>调用 W1D5 的结构化输出流程</td></tr>
+      <tr><td>展示层</td><td>把任务、验收标准、错误和下一步提示显示给用户</td></tr>
+    </tbody>
+  </table>
+  <p>这样做的直接收益是：纯函数可以脱离终端测试，模型可以被假的 <code>call_model</code> 替换，交互流程也不会和 SDK 细节纠缠在一起。</p>
+
+  <h2>3. 先实现两个纯函数（25 分钟）</h2>
+  <p>打开 <a href="../labs/w1d6/cli.py"><code>labs/w1d6/cli.py</code></a>，实现：</p>
+  <pre>validate_requirement(text: str) → str
+build_final_requirement(original, answers, revision="") → str</pre>
+  <p>契约如下：</p>
+  <ul class="checklist">
+    <li>需求先执行 <code>strip()</code>，全为空白时抛出 <code>ValueError</code></li>
+    <li>问题答案为空或只有空白时，不写入下一轮输入</li>
+    <li>答案顺序与传入字典的顺序一致，方便用户核对</li>
+    <li>修改意见非空时单独标记为“用户修改意见”</li>
+    <li>没有修改意见时，不生成空的修改意见段落</li>
+  </ul>
+
+  <h2>4. 状态机先于交互循环（20 分钟）</h2>
+  <p>模型生成的是草稿，用户确认的是最终结果。即使 <code>open_questions</code> 为空，也必须经过确认状态，因为用户可能需要修改模型的任务拆分、措辞或范围。</p>
+  <pre>COLLECT_REQUIREMENT
+  → ANALYZE_DRAFT
+  → CONFIRM_DRAFT
+  → COLLECT_ANSWERS（有问题时）
+  → ANALYZE_FINAL
+  → CONFIRM_FINAL
+  → DONE</pre>
+  <p>用户拒绝草稿时，不能悄悄继续使用旧结果；应该收集修改意见或重新输入需求，再进入下一轮分析。</p>
+
+  <h2>5. 配置、日志与错误（20 分钟）</h2>
+  <p>模型名、重试上限等运行配置应从参数或环境变量进入，密钥不得写入源码。用户输出应保持简洁，开发日志则记录调用阶段、尝试次数和异常详情。</p>
+  <pre>用户可见：需求不能为空，请重新输入。
+开发日志：结构化输出失败，attempt=2，error=JSON 解析失败。</pre>
+  <p>错误处理要区分三类：</p>
+  <ul class="checklist">
+    <li>输入错误：在调用模型前处理，不消耗模型请求</li>
+    <li>模型调用错误：记录日志，并根据策略重试或终止</li>
+    <li>输出格式或结构错误：交给 W1D5 的 repair prompt 和有界重试处理</li>
+  </ul>
+
+  <h2>6. 测试与验收（25 分钟）</h2>
+  <p>先运行当前脚手架，确认测试会因为两个函数尚未实现而失败：</p>
+  <pre>uv run pytest labs/w1d6/test_w1d6.py -q</pre>
+  <p>实现后至少覆盖以下场景：</p>
+  <ul class="checklist">
+    <li>普通需求首尾空白被清理</li>
+    <li>空字符串、空格、换行和制表符被拒绝</li>
+    <li>非空答案进入最终需求</li>
+    <li>空答案被过滤</li>
+    <li>修改意见存在时被单独加入</li>
+    <li>修改意见为空时不出现空段落</li>
+    <li>多个答案保持原有顺序</li>
+  </ul>
+  <p>测试文件：<a href="../labs/w1d6/test_w1d6.py"><code>labs/w1d6/test_w1d6.py</code></a></p>
+
+  <h2>7. 今日笔记与验收</h2>
+  <p>完成 <a href="../notes/W1D6.md"><code>notes/W1D6.md</code></a> 中的 CLI 链路、状态与错误处理、费曼卡片和今日复盘。最终验收包括：</p>
+  <ul class="checklist">
+    <li>W1D6 测试全部通过</li>
+    <li>能解释为什么“没有问题”仍要用户确认</li>
+    <li>能说明交互层和模型层为什么要分离</li>
+    <li>记录至少 3 个陌生需求或异常场景</li>
+  </ul>
+  <p>完成后告诉我测试结果和笔记状态，我会按实际产物进行 W1D6 评分。</p>
+
+  <h2>首选资料</h2>
+  <ul>
+    <li><a href="https://docs.python.org/3.12/howto/argparse.html">Python 官方 argparse 教程</a></li>
+    <li><a href="https://docs.python.org/3/howto/logging.html">Python 官方 Logging HOWTO</a></li>
+  </ul>
+  <p>卡住时告诉我具体函数、你的实现意图和测试输出，我会先给最小提示。</p>
+  <p><a href="0004-w1d4-testable-prompts.html">返回 W1D4</a> · <a href="../reference/prompt-contract.html">Prompt 契约速查</a></p>
+</main>
+</body>
+</html>
