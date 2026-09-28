@@ -1,894 +1,804 @@
-# 前端工程师 Agent 开发 12 周学习计划
+# 自定义 Agent 与 LangGraph 工作流 12 周学习计划
 
-> 学习周期：12 周（84 天）  
-> 学习投入：每天约 2 小时，总计约 168 小时  
-> 主线技术：Python、LangChain、LangGraph、DeerFlow、React/TypeScript  
-> 最终作品：一个可观察、可干预、可恢复、支持 RAG/MCP/沙箱与流式 UI 的 AI Native 应用生成 Agent
-
----
-
-## 1. 这份计划解决什么问题
-
-三份岗位描述共同要求的不只是“会调用大模型”，而是能把 Agent 做成可靠产品：
-
-1. **Agent 基础能力**：Prompt Engineering、结构化输出、Tool Calling、Agent Loop、上下文管理。
-2. **工作流编排**：任务规划、状态机、条件分支、重试、自修复、持久化、Human-in-the-loop、多 Agent。
-3. **知识与协议**：RAG、MCP、Agent Skills、A2A、多模型路由。
-4. **工程能力**：Python 服务端、SSE/WebSocket、异步任务、日志、评测、性能、成本和稳定性。
-5. **前端 Agent 体验**：React/TypeScript、复杂状态、流式 UI、工具调用卡片、代码 Diff、文件树、预览、错误恢复。
-6. **开发者工具能力**：Monaco、AST/LSP 基础、终端日志、沙箱、构建与部署。
-7. **多模态创作**：文本、图片等工具的统一接入和编排。
-
-你的前端背景已经覆盖 React、TypeScript、交互和状态管理，因此本计划不会重复普通前端基础，而是把重点放在：
-
-- 用 Python 建立 Agent 后端能力；
-- 从 LangChain 原语过渡到 LangGraph 可控工作流；
-- 以 DeerFlow 作为生产级源码范本；
-- 把 Agent 的内部执行状态映射成用户可理解的前端体验；
-- 最终形成能用于求职展示的完整项目与技术说明。
+> 学习周期：12 周（84 天）
+>
+> 学习投入：每天约 2 小时，总计约 168 小时
+>
+> 主线技术：Python、LangChain 基础原语、LangGraph、DeerFlow
+>
+> 源码样本：[bytedance/deer-flow](https://github.com/bytedance/deer-flow)
+>
+> 最终作品：一个基于 DeerFlow 的自定义 Agent、一条 LangGraph 工作流，以及一层可集成外部 Agent 的 A2A 接口
 
 ---
 
-## 2. 框架选择与学习顺序
+## 1. 学习目标
 
-这三层是递进关系，不是互斥选项：
+12 周后，不以“运行过 DeerFlow”或“会调用框架 API”为完成标准，而要能从空目录完成下面两件事。
 
-| 层级 | 本计划中的用途 | 何时使用 |
-|---|---|---|
-| LangChain | 模型、消息、Prompt、结构化输出、工具、RAG、基础 Agent | 单一目标、标准工具循环 |
-| LangGraph | 状态、节点、边、分支、循环、持久化、流式、人工介入 | 需要精确控制复杂工作流 |
-| DeerFlow | Lead Agent、Subagent、Middleware、Skills、MCP、Sandbox、前后端流式产品 | 学习完整 SuperAgent 产品架构 |
+### 1.1 自定义 Agent
 
-路线遵循：**先理解原语 → 手写最小循环 → 使用框架 → 拆解生产项目 → 独立重建核心能力**。不要一开始直接复制 DeerFlow，否则容易“会运行，不理解”。
+基于 DeerFlow 2.0 Harness 组装一个面向具体任务的 Agent。它能够：
 
----
+- 使用自定义 system prompt、结构化输出和不少于 3 个工具；
+- 自主判断何时调用工具、读取工具结果、继续推理或停止；
+- 处理工具异常、超时、最大步数和无效参数；
+- 输出可追踪的消息与工具调用记录；
+- 通过 Skill、Middleware 或 Subagent 扩展领域能力；
+- 通过 A2A 发现并调用外部 Agent，也能把自身能力暴露给其他 Agent；
+- 用测试和评测集证明它在目标任务上有效。
 
-## 3. 每天固定的 2 小时学习模板
+### 1.2 自定义 Agent 工作流
 
-普通学习日：
+使用 LangGraph 实现一条多阶段工作流。它至少包含：
 
-- 10 分钟：不看笔记回答前一次课的 3 个问题。
-- 25 分钟：阅读官方文档或源码，只记录关键概念。
-- 65 分钟：编码、调试和测试。
-- 15 分钟：费曼复述，假设向一名初级前端解释今天的知识。
-- 5 分钟：制作 3～5 张记忆卡片，并记录明日第一个动作。
+- 显式 State、Node、Edge、条件路由和有限循环；
+- coordinator、planner、executor、reviewer、reporter 等职责明确的节点；
+- 计划的结构化输出与人工确认；
+- checkpoint、暂停/恢复、流式事件和失败重试；
+- 至少一个由自定义 Agent 执行的节点；
+- 至少一个通过 A2A 调用外部 Agent 的节点；
+- 节点测试、路由测试、端到端测试和可重复评测。
 
-复习/大作业日：
+### 1.3 最终项目
 
-- 20 分钟：闭卷回忆与错题修正。
-- 80 分钟：阶段项目。
-- 20 分钟：演示、复盘、README 或架构图。
+最终项目包含两个可独立验证、可以组合运行的部分：
 
-如果某天只能学 1 小时：优先完成“闭卷回忆 + 最小可运行代码 + 作业提交”，阅读可顺延，不连续补两天的新内容。
+- **自定义 Agent**：基于 DeerFlow Harness 配置模型、Prompt、工具、Skill、Middleware 和 Subagent；
+- **A2A 接入层**：把自定义 Agent 暴露为 A2A Server，并作为 A2A Client 集成至少一个外部 Agent；
+- **自定义工作流**：使用 LangGraph 编排澄清、规划、人工确认、本地/外部 Agent 执行、质量检查和报告生成。
 
----
+可以替换成其他业务主题，但工作流复杂度和验收标准不能降低。
 
-## 4. 费曼学习与间隔重复规则
-
-### 4.1 每个知识点的复习节奏
-
-每个重要知识点在以下时间复习：
-
-- D0：当天完成编码和费曼解释；
-- D1：第二天闭卷回答；
-- D3：三天后改一个变量或场景重新实现；
-- D7：一周后在周作业中应用；
-- D14：两周后混合题复习；
-- D30：一个月后从空目录重建最小版本。
-
-### 4.2 每天的费曼卡片格式
-
-```markdown
-## 概念：
-- 一句话解释：
-- 它解决的问题：
-- 输入、输出与状态：
-- 最小例子：
-- 它最容易失败的地方：
-- 与前端概念的类比：
-- 我仍不确定的问题：
+```text
+用户输入
+  → coordinator 判断是否需要进入工作流
+  → planner 生成结构化计划
+  → human_feedback 接受或修改计划
+  → executor 按步骤调用 DeerFlow 自定义 Agent、外部 A2A Agent 或确定性节点
+  → reviewer 检查证据与完成度
+  → 未通过时有限次数返工
+  → reporter 生成最终结果
 ```
 
-### 4.3 作业完成标准
+---
 
-每天作业至少留下一个可检查产物：代码提交、测试、截图、录屏、架构图、费曼笔记或评测结果。仅“看完文档”不算完成。
+## 2. 技术路线与边界
 
-### 4.4 每日学习评分与反馈
+这三层是递进关系，不是三个互斥框架。
 
-每天任务结束后必须进行一次基于证据的评分，总分 100 分。评分不是评价聪明程度，而是判断当天内容是否已经达到“能回忆、能使用、能迁移”的程度。
+| 层级 | 本计划中的作用 | 必须掌握的内容 |
+|---|---|---|
+| LangChain 原语 | 模型、消息、Prompt、结构化输出、Tool | 为 Agent 和节点提供基础能力 |
+| LangGraph | 状态与流程编排 | State、Reducer、Node、Edge、Command、Send、Stream、Checkpoint、Interrupt |
+| DeerFlow 2.0 | 自定义 Agent Harness | Lead Agent、Middleware、Skills、Subagents、Memory、Sandbox、Context Engineering |
+| A2A | 跨系统 Agent 协作 | Agent Card、Message、Task、Artifact、Streaming、Cancel、Auth、版本兼容 |
 
-| 维度 | 分值 | 评分证据 |
-|---|---:|---|
-| 任务完成度 | 25 | 当日产物、必做项、运行结果是否齐全 |
-| 概念正确性 | 25 | 解释是否准确，是否混淆相近概念 |
-| 动手实现 | 25 | 能否运行、修改、调试代码，而非只阅读或复制 |
-| 闭卷检索 | 15 | 不看资料回答问题，纠错后能否重新准确表达 |
-| 复盘与迁移 | 10 | 能否说明失败原因、类比、应用场景和下一步 |
+框架选择原则：
 
-评分等级及后续动作：
+- 单次模型调用或固定链路：直接使用模型与结构化输出；
+- 单一目标、标准工具循环：使用 LangChain Agent 或手写 Agent Loop；
+- 有分支、循环、并行、持久化或人工介入：使用 LangGraph；
+- 需要发现、调用或向外提供独立 Agent 服务：使用 A2A；
+- DeerFlow 用于阅读、验证和提炼设计，不作为最终项目的复制模板。
 
-- **90～100：掌握**。按原计划进入下一天，并在 D3/D7 正常复习。
-- **80～89：基本掌握**。可以前进，但下一课开始前增加一道薄弱项检索题。
-- **70～79：部分掌握**。下一课前完成 15～30 分钟针对性补练。
-- **低于 70：未形成闭环**。暂停新增内容，先重做核心实验与闭卷解释。
+### 2.1 版本注意事项
 
-每日评分必须保存到 `assessments/WxDy.md`，包含：
+`bytedance/deer-flow` 的 `main` 分支是 DeerFlow 2.0，是一次不复用 1.x 代码的重写。它不是固定的 coordinator/planner/reporter 研究图，而是基于 LangChain Agent 与 LangGraph Runtime 的 Super Agent Harness。
 
-1. 五项分数与总分；
-2. 支持评分的具体证据；
-3. 做得好的地方；
-4. 需要加强的 1～3 点；
-5. 下一次学习开始前的补强动作；
-6. 当前结论是“掌握、基本掌握、部分掌握或未形成闭环”。
+开始源码学习时记录仓库 commit、DeerFlow 版本和依赖锁文件，并维护 `notes/version-differences.md`。主线以 `main` 的 2.0 架构为准；只有研究历史演进时才阅读 `main-1.x`。
 
-纠错后的答案可以证明已经学会，但首次误解仍用于定位薄弱点；不得仅凭“看完了”或模型代写的代码给满分。每周复习日汇总当周每日分数，观察薄弱维度的趋势，不以平均分代替具体问题分析。
+A2A 协议和 SDK 也在持续演进。第 9 周开始时固定 specification 与 `a2a-sdk` 版本，优先使用当前 1.x API，不把旧教程中的 0.2/0.3 数据结构直接复制到项目中。
+
+### 2.2 本期非主线
+
+以下内容只作为选修扩展，不占用主线时间：
+
+- 复杂前端编辑器、代码生成和沙箱预览；
+- 多模态生成和多模型路由；
+- 大规模 RAG 平台和生产部署；
+- 复制 DeerFlow 全部 UI 或所有工具。
 
 ---
 
-## 5. 开发环境与目录建议
+## 3. 学习方法与交付规则
 
-推荐使用 Python 3.12、`uv`、Node.js LTS、pnpm、Docker、Git。模型供应商可替换，密钥只放在 `.env`，不要提交到 Git。
+### 3.1 每天 2 小时模板
+
+- 10 分钟：闭卷回答前一次学习的 3 个问题；
+- 25 分钟：阅读官方文档或指定源码；
+- 65 分钟：编码、调试和测试；
+- 15 分钟：用自己的话解释今天的知识；
+- 5 分钟：记录证据、问题和下一步。
+
+如果当天只有 1 小时，优先完成“闭卷回忆 + 最小可运行代码 + 测试”，阅读顺延。
+
+### 3.2 间隔复习
+
+- D0：完成实现和费曼解释；
+- D1：闭卷回答；
+- D3：改变输入或失败条件后重做；
+- D7：在周项目中应用；
+- D14：与后续知识混合练习；
+- D30：从空目录重建最小版本。
+
+### 3.3 每日产物
+
+每天至少留下一个可检查产物：代码、测试、执行轨迹、架构图、源码笔记、评测结果或 ADR。仅“看完文档”不算完成。
+
+每日评分保存到 `assessments/WxDy.md`。
+
+| 维度 | 分值 | 证据 |
+|---|---:|---|
+| 任务完成度 | 25 | 必做项和当日产物是否齐全 |
+| 概念正确性 | 25 | 能否准确解释并区分相近概念 |
+| 动手实现 | 25 | 能否运行、修改和调试，而非复制 |
+| 闭卷检索 | 15 | 不看资料能否回答核心问题 |
+| 复盘与迁移 | 10 | 能否说明失败原因和新场景用法 |
+
+- 90～100：掌握，按计划前进；
+- 80～89：基本掌握，下一课增加一道补强题；
+- 70～79：部分掌握，先补练 15～30 分钟；
+- 低于 70：暂停新增内容，重做核心实验。
+
+---
+
+## 4. 建议目录
 
 ```text
 agent-learning/
-├── notes/             # 费曼笔记和记忆卡
-├── labs/              # 每日最小实验
-├── evaluations/       # 数据集与评测结果
-├── agent-backend/     # Python / FastAPI / LangGraph
-├── agent-frontend/    # React / TypeScript
-└── capstone/          # 最终综合项目
+├── notes/                    # 费曼笔记、源码地图、版本差异
+├── assessments/              # 每日与每周评分
+├── labs/                     # 每日最小实验
+├── evaluations/              # 数据集、轨迹和评测结果
+├── custom-agent/             # 第 2 周起的自定义 Agent
+├── custom-workflow/          # 第 3 周起的 LangGraph 工作流
+├── deer-flow-study/          # DeerFlow 源码笔记与实验补丁
+├── a2a-integration/          # A2A client/server、契约和兼容性测试
+└── capstone/                 # 最终项目
 ```
 
-每周至少保留一个可运行 tag，例如 `week-01-done`。建议每天一个小提交，提交信息说明“学会了什么”，而不只说明“改了什么”。
+推荐 Python 3.12、`uv`、Git 和可替换的模型供应商。密钥只放在 `.env`，仓库只提交 `.env.example`。
 
 ---
 
-# 第 1 周：LLM 应用与 Python Agent 基础
+# 第 1 周：LLM 与 Python 基础
 
-**周目标**：补齐前端工程师做 Python AI 后端所需的最小知识，理解 LLM 请求、消息、Token、结构化输出和 Prompt。  
-**周产物**：命令行“需求澄清助手”。  
-**岗位映射**：Prompt Engineering、Python、LLM 应用范式、AI Coding。
+**周目标**：建立 Agent 开发所需的 Python、消息、Prompt 和结构化输出基础。
 
-## Day 1：基线测评与环境
+**周产物**：命令行“需求澄清助手”。
 
-- **目标**：明确起点，建立可重复运行的 Python/Node 双端环境。
-- **操作**：创建学习仓库与目录；安装 Python、uv、Node、pnpm；配置 `.env.example`；分别运行一次 Python 和 TypeScript 的模型调用；记录耗时与 Token。
-- **作业**：写 `baseline.md`，闭卷解释 temperature、上下文窗口、输入/输出 Token；列出 12 周后希望能独立完成的 5 件事。
+**说明**：已有 Day 1～Day 6 产物时不重做，只修正未通过的评分项。
 
-## Day 2：Python 类型、异步与数据模型
+## Day 1：环境与基线
 
-- **目标**：掌握 Agent 后端高频 Python 语法。
-- **操作**：练习类型注解、dataclass/Pydantic、异常、生成器、`async/await`；把一个 TypeScript interface 改写为 Pydantic model。
-- **作业**：实现异步批量调用模拟器，限制并发数并处理超时；用 200 字解释 Python async 与 Promise 的异同。
+- **学习**：配置 Python、`uv`、`.env`；调用一次模型并记录耗时与 Token。
+- **产物**：`baseline.md`，解释 temperature、上下文窗口、输入/输出 Token。
 
-## Day 3：消息、Token 与上下文
+## Day 2：Python 类型与异步
 
-- **目标**：理解 system/user/assistant/tool 消息及上下文成本。
-- **操作**：打印完整请求和响应；比较同一任务在不同 system prompt 下的结果；实现简单消息历史裁剪。
-- **作业**：设计 5 个实验说明“Prompt 不是魔法字符串，而是程序输入”；D1 复习 Day 2。
+- **学习**：类型注解、Pydantic、异常、`async/await` 和并发限制。
+- **产物**：异步批量调用模拟器及超时测试。
 
-## Day 4：Prompt Engineering
+## Day 3：消息与上下文
 
-- **目标**：用角色、约束、示例和验收标准构建可测试 Prompt。
-- **操作**：为“把自然语言需求转为前端任务”写 zero-shot、few-shot 两版 Prompt；建立 10 条测试输入。
-- **作业**：比较两版的正确率、稳定性和 Token；写费曼笔记《好 Prompt 为什么像接口契约》。
+- **学习**：system/user/assistant/tool 消息和上下文裁剪。
+- **产物**：打印完整请求与响应，实现最小消息历史裁剪。
+
+## Day 4：Prompt 作为接口契约
+
+- **学习**：角色、约束、示例、输出契约和验收标准。
+- **产物**：两版 Prompt、10 条输入和对比记录。
 
 ## Day 5：结构化输出
 
-- **目标**：获得稳定、可验证的 JSON 输出。
-- **操作**：定义 `Requirement`, `Task`, `AcceptanceCriterion` 数据模型；实现解析、校验、失败重试和错误展示。
-- **作业**：加入 3 个故意破坏格式的测试；D3 复习 Day 2，并从空文件重写一个 Pydantic 模型。
+- **学习**：Pydantic schema、解析、校验和失败处理。
+- **产物**：结构化需求模型与至少 3 个失败测试。
 
-## Day 6：最小 CLI 应用
+## Day 6：最小 CLI
 
-- **目标**：把模型调用封装成一个可用程序。
-- **操作**：开发需求澄清 CLI：读取需求、输出问题、收集答案、生成结构化任务；加入日志、配置和错误处理。
-- **作业**：让另一人或用 3 组陌生需求试用；记录至少 3 个失败案例。
+- **学习**：把模型、配置、日志和错误处理封装成程序。
+- **产物**：可运行的需求澄清 CLI 和 3 个失败案例。
 
-## Day 7：周复习与大作业 1
+## Day 7：周复习
 
-- **目标**：闭环本周知识并建立第一份作品。
-- **操作**：闭卷画出“用户输入→Prompt→模型→解析→校验→输出”；完成 CLI README、安装命令、示例和测试。
-- **大作业**：提交“需求澄清助手 v0.1”。验收：结构化输出成功率 ≥ 90%，无密钥泄漏，异常有可理解提示。
-- **复习**：重做 Day 3 的上下文裁剪；随机抽取 10 张卡片，正确率低于 80% 的下周重测。
+- **任务**：完成 README、测试和执行示例；闭卷画出输入到结构化输出的全链路。
+- **验收**：陌生输入可运行；异常有明确提示；代码中没有密钥。
 
 ---
 
-# 第 2 周：Tool Calling 与基础 Agent Loop
+# 第 2 周：从零实现自定义 Agent
 
-**周目标**：理解模型如何选择工具、工具如何安全执行，以及 Agent 循环如何停止。  
-**周产物**：带 4 个工具、日志与预算限制的“前端项目分析 Agent”。  
-**岗位映射**：Function Calling、Tool Calling、Agent Loop、文件树、搜索、构建。
+**周目标**：理解 Agent 的本质，先手写循环，再使用框架实现同一能力。
 
-## Day 8：工具的本质
+**周产物**：带 3 个工具、预算与轨迹的自定义 Agent v0.1。
 
-- **目标**：理解工具 schema、描述、参数与返回值。
-- **操作**：实现 `read_file`、`list_files` 两个只读工具；观察不同工具描述对选择结果的影响。
-- **作业**：为工具写输入校验、错误类型和 6 个单测；D1 回忆周一知识。
+## Day 8：工具契约
+
+- **学习**：工具名称、描述、参数 schema、返回值和错误语义。
+- **产物**：`search_notes`、`read_file`、`calculate` 三个只读工具及单测。
 
 ## Day 9：手写 Agent Loop
 
-- **目标**：不依赖框架理解模型—工具—模型循环。
-- **操作**：手写循环：请求模型、检测 tool call、执行、追加 tool message、继续；加入最大轮数。
-- **作业**：画时序图；解释为什么“调用工具”和“执行工具”必须分离。
+- **学习**：模型请求、tool call 检测、工具执行、ToolMessage 回填和停止条件。
+- **产物**：不依赖 Agent 框架的最小循环及时序图。
 
-## Day 10：写操作与安全边界
+## Day 10：安全与边界
 
-- **目标**：设计可控的写文件工具。
-- **操作**：实现工作区路径校验、dry-run、覆盖确认、文件大小限制；模拟路径穿越攻击。
-- **作业**：写 8 个安全测试；D3 复习 Day 8，闭卷重写工具 schema。
+- **学习**：参数校验、路径约束、超时、最大轮数和结果大小限制。
+- **产物**：路径穿越、无效参数、超时和无限循环测试。
 
-## Day 11：搜索、构建与错误返回
+## Day 11：错误恢复
 
-- **目标**：让工具错误成为 Agent 可利用的信息。
-- **操作**：增加 `search_code`、`run_tests`；统一成功/失败返回结构；让 Agent 根据失败信息修正一次。
-- **作业**：构造命令不存在、测试失败、超时三类故障，保存执行轨迹。
+- **学习**：区分瞬时错误、模型可修复错误、用户可修复错误和程序错误。
+- **产物**：让 Agent 根据工具错误修正一次调用，并证明不会无限重试。
 
-## Day 12：LangChain `create_agent`
+## Day 12：框架版 Agent
 
-- **目标**：把手写循环迁移到标准 Agent，并理解框架代劳了什么。
-- **操作**：使用 LangChain 创建同等工具 Agent；对比消息序列、停止条件、异常和代码量。
-- **作业**：写表格比较手写 Loop 与 LangChain Agent；不能只写“更方便”。
+- **学习**：用 LangChain Agent 或 LangGraph `ToolNode` 重建同等能力。
+- **产物**：手写版与框架版在消息、控制权、异常和代码量上的对比表。
 
-## Day 13：可观察工具轨迹
+## Day 13：可观察性
 
-- **目标**：使执行过程对开发者和用户可解释。
-- **操作**：记录 run_id、轮次、工具名、参数摘要、耗时、状态和错误；输出 JSONL trace。
-- **作业**：实现隐私脱敏；用一条 trace 复盘 Agent 的一次错误决定。
+- **学习**：run_id、step、工具参数摘要、耗时、状态和错误。
+- **产物**：JSONL 轨迹和敏感字段脱敏测试。
 
-## Day 14：周复习与大作业 2
+## Day 14：周项目
 
-- **目标**：完成可控的代码库分析 Agent。
-- **大作业**：输入一个 React 项目目录和问题，Agent 可浏览文件、搜索符号、运行测试并输出带证据的结论。
-- **验收**：工具参数均校验；最大步数和超时生效；写操作默认关闭；每次运行有完整 trace。
-- **复习**：从空文件写最小 Agent Loop；复习第 1 周 Prompt 与结构化输出。
+- **任务**：完成“项目资料分析 Agent v0.1”。
+- **验收**：能选择并调用 3 个工具；最大步数有效；每次运行有完整轨迹；至少 10 条评测输入。
 
 ---
 
-# 第 3 周：RAG 与可验证回答
+# 第 3 周：LangGraph 基础
 
-**周目标**：掌握文档加载、切分、Embedding、检索、重排、引用和评测。  
-**周产物**：带引用、拒答和评测集的“前端团队知识助手”。  
-**岗位映射**：RAG、Search、上下文工程、可靠性。
+**周目标**：把 Agent 理解为状态转换系统，掌握自定义工作流的基本构件。
 
-## Day 15：RAG 全链路
+**周产物**：包含分支、循环和并行的 LangGraph 实验集。
 
-- **目标**：理解索引阶段与查询阶段。
-- **操作**：用 Markdown 文档建立最小检索；打印 chunk、向量检索结果和最终上下文。
-- **作业**：费曼解释 Embedding、向量相似度和关键词搜索的差异。
+## Day 15：StateGraph 心智模型
 
-## Day 16：切分策略
+- **学习**：State、Node、Edge、START、END 和 `compile()`。
+- **产物**：`START → analyze → answer → END` 最小图及图示。
 
-- **目标**：理解 chunk 大小、重叠与语义边界的取舍。
-- **操作**：比较固定长度、Markdown 标题和代码感知切分；对 10 个问题检查召回。
-- **作业**：制作切分实验表，给出适合技术文档的选择及证据；D1 复习。
+## Day 16：状态与 Reducer
 
-## Day 17：混合检索与元数据
+- **学习**：覆盖式字段、追加式字段、`MessagesState` 和 partial update。
+- **产物**：证明“缺少 reducer 会丢数据”的失败测试。
 
-- **目标**：提高专有名词、文件名和版本信息的召回。
-- **操作**：实现向量 + 关键词混合检索；加入路径、标题、版本等过滤字段。
-- **作业**：为 5 个“向量检索容易失败”的问题做对照实验。
+## Day 17：条件路由
 
-## Day 18：引用、拒答与上下文污染
+- **学习**：`add_conditional_edges` 与路由函数。
+- **产物**：简单问题直答、复杂问题规划、非法输入拒绝三条路径。
 
-- **目标**：让回答可验证并在证据不足时拒答。
-- **操作**：输出答案、引用片段、来源路径和置信提示；注入冲突文档测试。
-- **作业**：设计 5 条无答案问题，统计错误编造率；D3 复习 Day 15。
+## Day 18：Command
 
-## Day 19：Agentic RAG
+- **学习**：在节点中同时更新 State 和决定 `goto`。
+- **产物**：使用 `Command` 重写 Day 17，并测试所有目的节点。
 
-- **目标**：让 Agent 决定是否检索、改写问题和再次检索。
-- **操作**：构建“判断是否检索→查询→评估文档→改写→回答”的流程草图和原型。
-- **作业**：解释普通 RAG 与 Agentic RAG 的适用边界。
+## Day 19：循环与终止
 
-## Day 20：RAG 评测
+- **学习**：反思/修复循环、最大次数、重复错误检测和 recursion limit。
+- **产物**：一个可成功退出和一个强制终止的测试。
 
-- **目标**：把“感觉回答不错”变成可量化结果。
-- **操作**：制作 20 条问答集；分别计算检索命中、引用正确、答案正确、拒答正确。
-- **作业**：定位最差的 5 条并提出改进，不允许先改 Prompt 掩盖检索问题。
+## Day 20：Send 与并行
 
-## Day 21：周复习与大作业 3
+- **学习**：动态 fan-out/fan-in、worker 输入和结果 reducer。
+- **产物**：并行处理 3 个子任务并汇总，比较串行与并行耗时。
 
-- **目标**：综合应用检索、引用、拒答和评测，形成可重复验证的 RAG 产品。
-- **大作业**：完成团队知识助手，索引项目 README、规范和组件文档，支持引用与拒答。
-- **验收**：20 条评测集可重复运行；关键指标有基线；回答可追溯到源文件；错误案例有分类。
-- **复习**：混合测试 Tool Calling + RAG；解释“检索器为什么也是工具”。
+## Day 21：周项目
+
+- **任务**：实现“分析 → 多路处理 → 汇总 → 检查 → 有限返工”的纯工作流。
+- **验收**：节点只返回 partial update；列表字段有 reducer；每条边和终止条件均有测试。
 
 ---
 
-# 第 4 周：LangGraph 状态与工作流
+# 第 4 周：自定义 Agent 工作流 v0.1
 
-**周目标**：掌握显式状态、节点、边、条件路由、循环、并行与子图。  
-**周产物**：需求规划—生成—检查—修复工作流。  
-**岗位映射**：Workflow、任务调度、复杂状态、自修复。
+**周目标**：把自定义 Agent 放进 LangGraph，形成职责清晰的多阶段工作流。
 
-## Day 22：StateGraph 心智模型
+**周产物**：coordinator、planner、executor、reviewer、reporter 工作流。
 
-- **目标**：把 Agent 从“聊天函数”理解为状态转换系统。
-- **操作**：定义 Typed State；实现 START→分析→输出→END；打印每步状态更新。
-- **作业**：用 React reducer 类比 LangGraph state，并指出类比失效之处。
+## Day 22：先画图再编码
 
-## Day 23：条件边与路由
+- **学习**：把业务步骤分类为 LLM、数据、动作和用户输入节点。
+- **产物**：流程图，以及每个节点的输入、输出、失败与重试表。
 
-- **目标**：根据结构化决策选择路径。
-- **操作**：实现简单问题直答、复杂问题进入规划、非法输入拒绝三条分支。
-- **作业**：覆盖每条边的测试；D1 闭卷画图。
+## Day 23：工作流 State
 
-## Day 24：循环与终止
+- **学习**：区分原始数据、派生数据、运行控制和最终产物。
+- **产物**：`WorkflowState` 及字段所有权说明。
 
-- **目标**：实现有限、自解释的修复循环。
-- **操作**：生成代码→运行检查→失败反馈→重试；加入重试次数和相同错误检测。
-- **作业**：构造无法修复的失败，证明图能安全终止。
+## Day 24：Coordinator
 
-## Day 25：并行与汇聚
+- **学习**：识别闲聊、信息不足和可执行任务，决定直答或进入规划。
+- **产物**：结构化路由结果及三类分支测试。
 
-- **目标**：理解 fan-out/fan-in 和状态合并。
-- **操作**：并行执行需求分析、风险分析、测试建议，再汇总；比较串行耗时。
-- **作业**：解释并发冲突、结果顺序和 reducer；D3 复习 Day 22。
+## Day 25：Planner
 
-## Day 26：子图与职责边界
+- **学习**：用 Pydantic 定义 Plan/Step，限制步骤数量和类型。
+- **产物**：计划生成节点、schema 测试和无效计划处理。
 
-- **目标**：拆分可测试、可复用工作流。
-- **操作**：把代码检查流程封装为子图；规定父图与子图的输入输出。
-- **作业**：写 ADR：为何使用子图，而不是一个超长 Prompt。
+## Day 26：Executor
 
-## Day 27：流式状态更新
+- **学习**：按 Step 类型把任务交给不同自定义 Agent 或普通节点。
+- **产物**：至少两个执行角色和统一的执行结果契约。
 
-- **目标**：区分 token、message、state update 和 custom progress。
-- **操作**：分别流式输出模型文本、节点状态、进度事件；观察消费者如何重建状态。
-- **作业**：定义前端事件联合类型及乱序/重复处理策略。
+## Day 27：Reviewer 与 Reporter
 
-## Day 28：周复习与大作业 4
+- **学习**：将“检查是否完成”和“生成最终答案”分成两个职责。
+- **产物**：证据/完整度检查、一次有限返工和最终报告节点。
 
-- **目标**：把状态、分支、循环和流式更新组合成一条可测试的代码生成工作流。
-- **大作业**：输入一段前端需求，图完成拆解、生成、lint/test、最多两次修复并输出结果。
-- **验收**：有架构图；节点可独立测试；所有循环有终止条件；状态字段有明确所有者。
-- **复习**：从空目录重建第 2 周工具 Agent 的最小版（D14 间隔复习）。
+## Day 28：周项目
+
+- **任务**：完成自定义 Agent 工作流 v0.1。
+- **验收**：5 类节点可独立测试；计划为结构化数据；至少一条返工路径；从输入到报告可端到端运行。
 
 ---
 
-# 第 5 周：持久化、记忆、人工介入与恢复
+# 第 5 周：持久化、人工介入与流式执行
 
-**周目标**：建立长任务可恢复、关键操作可审批、对话可分支的能力。  
-**周产物**：支持暂停/恢复/回滚的变更 Agent。  
-**岗位映射**：任务状态、版本回滚、Human-in-the-loop、可靠性。
+**周目标**：让工作流能够暂停、恢复、接受计划修改，并把执行过程持续输出。
 
-## Day 29：线程与 Checkpoint
+**周产物**：自定义 Agent 工作流 v0.2。
 
-- **目标**：区分会话、运行、状态快照和长期记忆。
-- **操作**：为图加入 checkpointer；使用不同 thread_id；关闭进程后恢复。
-- **作业**：画 thread/run/checkpoint/message 的关系图。
+## Day 29：Checkpoint 与 Thread
 
-## Day 30：短期与长期记忆
+- **学习**：run、thread、checkpoint 和 state snapshot 的关系。
+- **产物**：加入 checkpointer，使用两个 `thread_id` 验证状态隔离。
 
-- **目标**：避免把全部聊天记录误当记忆。
-- **操作**：实现会话摘要和用户偏好存储；验证跨线程读取边界。
-- **作业**：列出该存、不该存和必须征得同意的信息；D1 复习。
+## Day 30：暂停与恢复
 
-## Day 31：人工审批
+- **学习**：`interrupt()` 与 `Command(resume=...)`。
+- **产物**：在计划执行前暂停，支持接受、修改和拒绝。
 
-- **目标**：在高风险工具前暂停并接受批准、拒绝或编辑。
-- **操作**：为写文件、执行命令、部署加入 interrupt；前端先用 CLI 模拟审批。
-- **作业**：测试批准、拒绝、修改参数、超时四条路径。
+## Day 31：持久化边界
 
-## Day 32：时间旅行与分支
+- **学习**：内存 checkpointer 与数据库 checkpointer 的用途差异。
+- **产物**：进程重启恢复实验和“哪些状态必须持久化”ADR。
 
-- **目标**：从旧状态派生新分支，而非破坏历史。
-- **操作**：查看 checkpoint 历史；从生成前状态改变需求后重跑。
-- **作业**：解释 Agent 时间旅行与 Git commit/branch 的相似和差异；D3 复习 Day 29。
+## Day 32：流式模式
 
-## Day 33：幂等、重试和去重
+- **学习**：`values`、`updates`、`messages` 和 `custom`。
+- **产物**：分别输出状态变化、token 和自定义进度事件。
 
-- **目标**：防止恢复后重复执行副作用。
-- **操作**：给工具调用设置 idempotency key；模拟断线重连和重复事件。
-- **作业**：为“重复写文件/重复部署”写故障测试。
+## Day 33：幂等与副作用
 
-## Day 34：故障模型
+- **学习**：恢复执行可能重复调用工具的原因。
+- **产物**：idempotency key、去重记录和重复写入测试。
 
-- **目标**：系统化处理模型、工具、网络、状态和用户取消。
-- **操作**：建立错误分类；定义哪些自动重试、哪些降级、哪些需要用户介入。
-- **作业**：制作错误决策表和 5 条故障演练记录。
+## Day 34：错误策略
 
-## Day 35：周复习与大作业 5
+- **学习**：RetryPolicy、工具错误回填、用户补充信息和异常上抛。
+- **产物**：错误分类决策表与 5 条故障演练。
 
-- **目标**：验证 Agent 在审批、崩溃恢复和历史分支下仍能保持状态正确。
-- **大作业**：变更 Agent 在写文件前等待审批，崩溃后可恢复，从旧 checkpoint 创建另一方案。
-- **验收**：副作用不重复；分支历史可追踪；拒绝后状态正确；恢复流程有自动化测试。
-- **复习**：D14 复习 RAG，闭卷搭建“检索→证据评估→回答”流程图。
+## Day 35：周项目
+
+- **任务**：升级 v0.2，支持计划审批、断点恢复和事件流。
+- **验收**：拒绝与修改路径正确；恢复不重复副作用；流事件可解释当前节点和状态。
 
 ---
 
-# 第 6 周：SSE、React 流式 UI 与复杂前端状态
+# 第 6 周：运行并建立 DeerFlow 2.0 源码地图
 
-**周目标**：把 Agent 内部状态变成稳定、可理解、可干预的 React 体验。  
-**周产物**：Agent 执行控制台。  
-**岗位映射**：Streaming、SSE/Event Stream、复杂状态、任务/消息/工具/沙箱同步。
+**周目标**：运行官方主仓库，理解 Gateway、Agent Harness 与前端之间的边界。
 
-## Day 36：SSE 协议
+**周产物**：《DeerFlow 2.0 源码地图 v1》。
 
-- **目标**：理解流式传输、事件 ID、重连和完成信号。
-- **操作**：FastAPI 输出 token/progress/tool/error/end 事件；用 curl 和浏览器消费。
-- **作业**：比较 SSE、WebSocket、轮询在 Agent 场景的取舍。
+## Day 36：锁定版本并运行
 
-## Day 37：前端事件归约器
+- **学习**：记录 commit、DeerFlow 版本、Python/Node 和锁定依赖，阅读 `README.md` 与 `Install.md`。
+- **产物**：可重复启动步骤、一次完整 Agent Run 和踩坑记录。
 
-- **目标**：由事件流确定性重建 UI 状态。
-- **操作**：定义 discriminated union；实现 reducer 管理 run、message、tool call、error。
-- **作业**：测试重复、乱序、断线和未知事件；D1 复习。
+## Day 37：Monorepo 地图
 
-## Day 38：流式消息与工具卡片
+- **学习**：识别 `backend/app`、`backend/packages/harness`、`frontend`、`skills` 和配置文件的边界。
+- **产物**：Container 图与目录职责表，所有判断附入口源码证据。
 
-- **目标**：分别表达“模型正在说”和“工具正在做”。
-- **操作**：实现增量 Markdown、工具参数摘要、运行中/成功/失败状态和耗时。
-- **作业**：用录屏解释一次完整 Agent Run，而不是只展示最终答案。
+## Day 38：Lead Agent 组装入口
 
-## Day 39：断线重连与 Join Stream
+- **学习**：阅读 `agents/lead_agent/agent.py` 的 `make_lead_agent`、`assemble_lead_agent` 和 `create_agent` 调用。
+- **产物**：从配置到 model、tools、middleware、state schema 和 compiled graph 的组装图。
 
-- **目标**：刷新页面后仍能回到正在运行的任务。
-- **操作**：持久化 run_id、last_event_id；重连后补齐事件并去重。
-- **作业**：自动化测试刷新、弱网、重复连接；D3 复习 Day 36。
+## Day 39：ThreadState 与 Runtime
 
-## Day 40：人工介入 UI
+- **学习**：阅读 `agents/thread_state.py`，理解消息、todos、artifacts、goal、delegations 和 reducer。
+- **产物**：ThreadState 字段所有权表，并与第 4 周 `WorkflowState` 对比。
 
-- **目标**：实现 approve/reject/edit 的清晰交互。
-- **操作**：展示风险、工具参数、影响范围；审批后恢复流；拒绝时保留上下文。
-- **作业**：写一页交互准则：什么操作必须打断用户，什么操作只需通知。
+## Day 40：Gateway 与执行链
 
-## Day 41：多状态一致性
+- **学习**：从 Gateway 的 run/thread API 追踪到 Agent graph、checkpoint 和 stream event。
+- **产物**：浏览器输入到模型、工具、SSE 再回到 UI 的调用时序图。
 
-- **目标**：管理任务、文件、消息、工具、checkpoint 多条时间线。
-- **操作**：规范服务端为事实来源；实现快照 + 增量事件；处理乐观更新回滚。
-- **作业**：画状态所有权图，找出至少 3 个潜在竞态。
+## Day 41：工具与 Sandbox
 
-## Day 42：周复习与大作业 6
+- **学习**：追踪 built-in/configured/MCP tools，以及 SandboxProvider、虚拟路径和文件工具。
+- **产物**：工具来源图、权限边界和一次只读工具执行轨迹。
 
-- **目标**：交付一个可重连、可审批、可解释执行过程的 React Agent 控制台。
-- **大作业**：完成 React Agent 控制台：流式消息、节点进度、工具卡片、审批、重连、错误恢复。
-- **验收**：刷新不丢运行；事件可重放；错误不导致白屏；键盘可操作；状态 reducer 有测试。
-- **复习**：D14 复习 LangGraph，从空白画出含循环、条件和人工介入的图。
+## Day 42：周复习
+
+- **任务**：闭卷讲解 DeerFlow 2.0 如何把模型、工具、中间件、状态和运行时组装成 Lead Agent。
+- **验收**：能从架构图定位到关键源码；能说明 2.0 与 `main-1.x` 至少 5 个差异。
 
 ---
 
-# 第 7 周：DeerFlow 源码导读与运行时
+# 第 7 周：拆解 DeerFlow Harness 核心机制
 
-**周目标**：能运行、追踪并解释 DeerFlow 的请求路径，不停留在界面试用。  
-**周产物**：DeerFlow 架构导读文档和一次小改动。  
-**岗位映射**：LangGraph、Agent Runtime、Sandbox、Skills、MCP、开源项目经验。
+**周目标**：理解 DeerFlow 如何通过 Middleware、Skills、Subagents、Memory 和 Context Engineering 扩展 Agent。
 
-> 以当前检出的 DeerFlow 版本为准。先读仓库 README、安装文档和各目录的 `AGENTS.md`，不要套用旧版文章中的架构。
+**周产物**：《DeerFlow 2.0 Harness 关键机制导读》。
 
-## Day 43：运行 DeerFlow
+## Day 43：Middleware 执行模型
 
-- **目标**：建立端到端可运行基线。
-- **操作**：阅读安装与配置；启动前后端；完成一次普通问答、一次工具调用；记录端口和进程。
-- **作业**：写安装踩坑清单和一键复现步骤。
+- **学习**：理解 before/after agent、wrap model、wrap tool 等 hook 以及 middleware 顺序的影响。
+- **产物**：一次模型与工具调用经过 middleware chain 的时序图。
 
-## Day 44：仓库地图
+## Day 44：Planning 与 Clarification
 
-- **目标**：识别 frontend、gateway/runtime、agent、sandbox、skills、MCP 的边界。
-- **操作**：用目录树和入口文件画 C4 Container 图；标出配置加载路径。
-- **作业**：5 分钟口述“一个请求经过哪些组件”；D1 复习。
+- **学习**：阅读 Todo、Clarification 和 LoopDetection Middleware，区分 middleware 控制与显式图路由。
+- **产物**：与第 4 周 planner/reviewer 节点的对比表。
 
-## Day 45：Lead Agent 与 Middleware
+## Day 45：Skills
 
-- **目标**：理解 Agent 创建、工具装配和中间件链。
-- **操作**：从 lead agent 入口追踪到模型、工具、中间件；为每个中间件记录输入、输出和副作用。
-- **作业**：选择一个中间件画执行时序，并说明为何不是普通工具。
+- **学习**：追踪 Skill 扫描、激活、上下文注入和工具权限，理解按需加载的意义。
+- **产物**：一个最小领域 Skill，以及“何时用 Skill/Prompt/Tool”的决策表。
 
-## Day 46：线程、运行与 SSE
+## Day 46：Subagents
 
-- **目标**：追踪浏览器到后端再回到 UI 的完整事件流。
-- **操作**：用 DevTools 检查创建 thread、run、stream；在后端打断点/日志关联 ID。
-- **作业**：保存一份脱敏网络事件样本；D3 复习 Day 43。
+- **学习**：追踪 `task` 工具、SubagentRuntime、类型 allowlist、并发与总量限制。
+- **产物**：Lead Agent 委派一个受限子任务的轨迹和预算测试。
 
-## Day 47：工具与 Sandbox
+## Day 47：Memory 与 Summarization
 
-- **目标**：理解安全执行和工作目录隔离。
-- **操作**：追踪一次 bash/file 工具调用；记录命令如何进入 sandbox、如何返回日志和 artifact。
-- **作业**：列出 10 条沙箱威胁及现有/建议防护。
+- **学习**：区分 thread state、long-term memory、dynamic context 和 context compaction。
+- **产物**：数据生命周期图，并列出不应写入长期记忆的信息。
 
-## Day 48：Skills、MCP 与 Subagent
+## Day 48：安全与可靠性 Middleware
 
-- **目标**：理解能力扩展与任务委派。
-- **操作**：阅读 Skills 加载、MCP 配置、task/subagent 执行路径；画 Lead Agent 委派图。
-- **作业**：解释 Skill、Tool、MCP Server、Subagent 各自解决什么问题。
+- **学习**：选择 ToolError、PII Redaction、ReadBeforeWrite、LoopDetection 中两项追踪源码。
+- **产物**：每项的输入、输出、状态修改、失败策略和测试证据。
 
-## Day 49：周复习与大作业 7
+## Day 49：周复习
 
-- **目标**：能够从端到端运行轨迹解释 DeerFlow 的核心架构，并完成一次受控扩展。
-- **大作业**：提交《DeerFlow 源码导读》：架构图、请求时序、状态模型、扩展点、风险和 5 个关键源码链接；完成一个低风险小改动（如新增只读工具或进度 UI）。
-- **验收**：能从 UI 事件定位到后端产生位置；改动有测试或手工验证；文档不依赖旧版架构印象。
-- **复习**：D30 复习第 3 周 RAG，从空目录重建最小检索 Demo。
+- **任务**：选一个真实请求，追踪 Lead Agent 从 Prompt 组装到工具、Skill、Subagent 和最终输出的全过程。
+- **验收**：列出可复用设计与不应照抄的复杂机制各 5 项。
 
 ---
 
-# 第 8 周：MCP、Skills、多 Agent 与多模型路由
+# 第 8 周：基于 DeerFlow 搭建自定义 Agent
 
-**周目标**：构建标准化工具接入、技能按需加载、角色委派与模型选择。  
-**周产物**：可扩展的研究/编码双 Agent。  
-**岗位映射**：MCP、Agent Skills、A2A、多 Agent、Agent 市场、多模型路由。
+**周目标**：使用 DeerFlow Harness 的公开配置和扩展点，搭建一个领域明确的自定义 Agent。
 
-## Day 50：MCP 心智模型
+**周产物**：DeerFlow 自定义 Agent v0.1。
 
-- **目标**：理解 client/server、tools/resources/prompts 和 transport。
-- **操作**：阅读协议核心概念；画宿主、客户端、服务端关系；连接一个本地只读 MCP Server。
-- **作业**：解释 MCP 与普通 REST API、LangChain Tool 的差异。
+## Day 50：冻结 Agent 契约
 
-## Day 51：自建 MCP Server
+- **学习**：确定目标用户、system prompt、输入输出、3 个工具、1 个 Skill 和非目标。
+- **产物**：一页 Agent Contract 与验收样例。
 
-- **目标**：把团队能力封装成标准工具。
-- **操作**：实现组件文档搜索和项目统计两个工具；加入 schema、错误和日志。
-- **作业**：写契约测试和 README；D1 复习。
+## Day 51：配置与 Prompt
 
-## Day 52：权限与注入风险
+- **任务**：创建最小配置或 Custom Agent 定义，配置模型、Prompt、工具 allowlist 和运行限制。
+- **产物**：Agent 可启动，并通过简单任务与越权工具测试。
 
-- **目标**：防止远程工具扩大 Agent 权限。
-- **操作**：实现 allowlist、参数验证、超时、结果大小限制；测试恶意工具描述和不可信内容。
-- **作业**：完成 MCP 威胁模型与审批矩阵。
+## Day 52：领域工具
 
-## Day 53：Agent Skills
+- **任务**：实现搜索、读取和一个领域处理工具，统一 schema、错误和来源信息。
+- **产物**：3 个工具的契约测试与完整调用轨迹。
 
-- **目标**：理解按需加载领域说明与固定工作流。
-- **操作**：编写“React 性能审查”Skill，包含触发条件、步骤、产物和验收标准。
-- **作业**：比较把知识放 system prompt、RAG、Skill 的取舍；D3 复习 Day 50。
+## Day 53：领域 Skill
 
-## Day 54：Subagent 委派
+- **任务**：编写包含触发条件、步骤、产物和验收规则的 Skill。
+- **产物**：Skill 激活与不激活的对照实验。
 
-- **目标**：让主 Agent 负责规划，专业 Agent 负责受限任务。
-- **操作**：构建 researcher 和 coder；定义输入、输出、预算、超时和上下文隔离。
-- **作业**：测试委派失败、部分结果和上下文泄漏。
+## Day 54：自定义 Middleware
 
-## Day 55：多模型路由
+- **任务**：实现一个小型审计、输入校验或结果质量 Middleware，并选择正确 hook 位置。
+- **产物**：Middleware 顺序测试，证明它不会破坏正常模型与工具调用。
 
-- **目标**：按任务、成本、延迟和能力选择模型。
-- **操作**：定义 fast/strong/vision 三种能力标签；实现规则路由和 fallback；记录成本。
-- **作业**：用 15 个任务评估路由准确性，并分析错误路由。
+## Day 55：受限 Subagent
 
-## Day 56：周复习与大作业 8
+- **任务**：增加一个专业 Subagent，限制可用工具、最大轮数、超时和并发。
+- **产物**：成功委派、拒绝越权和预算耗尽三条路径。
 
-- **目标**：综合验证 MCP、Skill、Subagent 与多模型路由的边界和协作方式。
-- **大作业**：Lead Agent 通过 MCP 获取资料，把研究委派给 researcher，把修改建议交给 coder，并按任务路由模型。
-- **验收**：协议边界明确；子 Agent 有独立预算；敏感工具需审批；trace 能显示委派链。
-- **复习**：D14 复习持久化与幂等；口述一次断点恢复流程。
+## Day 56：周项目
+
+- **任务**：完成 DeerFlow 自定义 Agent v0.1，并与第 2 周手写 Agent 做设计对照。
+- **验收**：Agent Contract 可验证；扩展点有测试；README 能解释为何使用 Harness 而不是显式工作流。
 
 ---
 
-# 第 9 周：AI Coding、Monaco、Diff 与沙箱预览
+# 第 9 周：A2A 与外部 Agent 集成
 
-**周目标**：构建岗位描述中的 prompt→plan→edit→diff→build→preview→fix 体验。  
-**周产物**：最小 AI App Builder。  
-**岗位映射**：代码编辑、Diff、terminal log、build error、preview、WebContainer/E2B、编辑器。
+**周目标**：让 DeerFlow 自定义 Agent 和 LangGraph 工作流能够发现、调用并向外提供独立 Agent 服务。
 
-## Day 57：文件树与工作区模型
+**周产物**：一个 A2A Server、一个 A2A Client，以及接入外部 Agent 的工作流。
 
-- **目标**：定义 Agent 和前端共享的文件状态。
-- **操作**：实现文件列表、读取、创建、更新、删除的受控 API；加入版本号和冲突检测。
-- **作业**：测试并发编辑与越权路径。
+## Day 57：A2A 心智模型
 
-## Day 58：Monaco 与编辑状态
+- **学习**：理解 Agent Card、Message、Part、Task、TaskState、Artifact 和 Extension。
+- **产物**：说明 A2A、MCP、普通 Tool 和内部 Subagent 的边界，并画出协议角色图。
 
-- **目标**：区分服务端文件、编辑器 buffer 和未保存改动。
-- **操作**：接入 Monaco；实现选中文件、dirty 状态、保存和外部修改提示。
-- **作业**：画三层状态同步图；D1 复习。
+## Day 58：Agent Discovery 与契约
 
-## Day 59：Patch 与 Diff
+- **学习**：读取 Agent Card，检查 skills、输入输出模式、接口地址、安全方案和协议版本。
+- **产物**：外部 Agent 能力契约、兼容性检查和“不满足要求时拒绝调用”的测试。
 
-- **目标**：让 Agent 提交最小、可审查的修改。
-- **操作**：生成 unified diff；前端展示前后对比；用户可接受/拒绝单个文件。
-- **作业**：测试 patch 冲突、部分应用、二进制文件和大文件。
+## Day 59：实现 A2A Client
 
-## Day 60：构建日志与错误定位
+- **学习**：使用官方 Python SDK 发送 Message，处理同步响应、Task 和 Artifact。
+- **产物**：调用一个本地示例或受控外部 Agent，并把响应转换为内部统一结果。
 
-- **目标**：把终端输出映射到文件和错误。
-- **操作**：流式展示 install/build/test；解析常见 TypeScript/Vite 错误；点击跳转行号。
-- **作业**：收集 5 类真实构建错误作为回归集；D3 复习 Day 57。
+## Day 60：实现 A2A Server
 
-## Day 61：Sandbox Preview
+- **学习**：为 DeerFlow 自定义 Agent 定义 Agent Card、Agent Executor 和请求处理入口。
+- **产物**：外部客户端可以发现并调用自己的 Agent，内部 Prompt、Memory 和 Tools 不对外泄漏。
 
-- **目标**：在隔离环境构建并预览生成应用。
-- **操作**：选 Docker、WebContainer 或远程 sandbox 实现一种；限制 CPU、内存、时间和网络；返回预览 URL。
-- **作业**：解释选型依据和安全边界。
+## Day 61：长任务、流式与取消
 
-## Day 62：错误自修复闭环
+- **学习**：处理 Task 状态变化、SSE streaming、Artifact 增量、取消和超时。
+- **产物**：运行中、完成、失败、取消四条任务生命周期测试。
 
-- **目标**：让构建错误驱动有限修复。
-- **操作**：把精简错误、相关文件和最近 diff 反馈给 Agent；最多修复两轮；相同错误停止。
-- **作业**：对回归集统计首次成功率、修复成功率、平均轮次和成本。
+## Day 62：安全与可靠性
 
-## Day 63：周复习与大作业 9
+- **学习**：认证、授权、输入验证、任务关联、幂等、重试、版本兼容和外部结果不可信原则。
+- **产物**：威胁模型，以及伪造 Agent Card、重复请求、超时和恶意 Artifact 测试。
 
-- **目标**：打通从自然语言需求到可审查代码、沙箱构建与预览的完整链路。
-- **大作业**：用户输入小应用需求，系统规划、生成文件、展示 Diff、沙箱构建、实时预览并尝试修复错误。
-- **验收**：用户可中止；修改可审查；构建日志可定位；失败不会无限循环；工作区不可越界。
-- **复习**：D30 复习第 4 周 LangGraph，闭卷重写条件循环图。
+## Day 63：周项目
+
+- **任务**：在 LangGraph executor 中增加 A2A 节点，按 Step 类型选择本地 DeerFlow Agent 或外部 Agent。
+- **验收**：至少集成一个外部 Agent；远端不可用时可降级或失败终止；trace 能关联本地 run 与远端 task。
 
 ---
 
-# 第 10 周：多模态、任务队列与产品质量
+# 第 10 周：测试、评测与可观察性
 
-**周目标**：接入图片工具，处理长任务调度，建立可用性和无障碍质量标准。  
-**周产物**：多模态创作工作流。  
-**岗位映射**：图像/视频/文案统一接入、多模态、任务调度、生成体验质量。
+**周目标**：把“看起来能用”变成可重复验证的工程结论。
 
-## Day 64：多模态消息模型
+**周产物**：自动化测试、评测集和运行报告。
 
-- **目标**：统一文本、图片、文件和 artifact 的表示。
-- **操作**：设计内容块 schema；支持上传、预览、模型输入和结果引用。
-- **作业**：测试缺失文件、超大图片、错误 MIME 和重复上传。
+## Day 64：节点测试
 
-## Day 65：图片工具编排
+- **学习**：用 fake model、fake tool 和固定 State 隔离节点。
+- **产物**：每个核心节点至少一个成功和一个失败测试。
 
-- **目标**：把图片生成/理解作为工具，而非硬编码流程。
-- **操作**：定义生成图片、分析图片工具；支持进度、失败和 artifact 元数据。
-- **作业**：设计 10 个提示评测视觉一致性；D1 复习。
+## Day 65：路由测试
 
-## Day 66：创作 Workflow
+- **学习**：用表驱动测试覆盖条件边与 Command 目的地。
+- **产物**：路由矩阵，证明所有分支可达且循环可终止。
 
-- **目标**：把文案、配图和页面生成组合成可恢复任务。
-- **操作**：规划→并行生成文案/图片→页面组装→检查；失败只重跑对应节点。
-- **作业**：解释为什么局部重跑依赖明确的状态边界。
+## Day 66：端到端测试
 
-## Day 67：任务队列与取消
+- **学习**：固定模型输出或录制响应，减少测试随机性。
+- **产物**：直答、完整任务、人工修改、工具失败、A2A 成功和远端失败六条场景。
 
-- **目标**：处理排队、运行、取消、重试和优先级。
-- **操作**：实现最小后台任务模型；取消信号传入 Agent 与工具；前端显示队列。
-- **作业**：测试取消与工具完成同时发生的竞态；D3 复习 Day 64。
+## Day 67：结果评测
 
-## Day 68：生成产品质量
+- **学习**：任务完成、事实/证据、结构、拒答和格式指标。
+- **产物**：至少 20 条输入及可重复评分脚本，其中包含本地/远端 Agent 路由样例。
 
-- **目标**：建立视觉、响应式、交互和一致性检查。
-- **操作**：定义检查表；运行移动/桌面视口；验证 loading/error/empty 状态。
-- **作业**：对两个生成页面盲评，列证据而非个人喜好。
+## Day 68：轨迹评测
 
-## Day 69：无障碍与信任体验
+- **学习**：检查是否选对工具/Agent、是否走对路径、是否产生无效循环或重复远端任务。
+- **产物**：本地 run 与 A2A task 关联视图，以及 5 个失败轨迹的根因记录。
 
-- **目标**：让非技术用户也能理解 Agent 正在做什么。
-- **操作**：检查键盘、焦点、ARIA、颜色对比；把内部日志翻译为用户进度；高级日志折叠展示。
-- **作业**：写《Agent UI 的 10 条信任原则》。
+## Day 69：延迟与成本
 
-## Day 70：周复习与大作业 10
+- **学习**：按节点和远端 Agent 记录调用次数、Token、排队/执行耗时、错误率和重试次数。
+- **产物**：基线报告，以及一个有数据支持的优化。
 
-- **目标**：完成支持局部失败恢复、取消和产物管理的多模态创作流程。
-- **大作业**：输入活动主题，Agent 生成文案、配图和响应式落地页；支持局部重试、取消和 artifact 下载。
-- **验收**：多模态状态统一；失败可局部恢复；移动端可用；关键操作有用户反馈。
-- **复习**：D14 复习 DeerFlow 请求链，闭卷画架构和流式时序。
+## Day 70：周项目
+
+- **任务**：运行完整回归与评测，修复最主要的两类失败。
+- **验收**：改动前后指标可比较；失败案例不被删除；报告能定位到节点或工具。
 
 ---
 
-# 第 11 周：评测、可观察性、性能、成本与安全
+# 第 11 周：API、流式 UI 与运行控制
 
-**周目标**：让系统从“Demo 可用”走向“工程上可信”。  
-**周产物**：评测流水线、Trace 面板和性能报告。  
-**岗位映射**：高并发、推理效率、稳定性、成本、系统可用性、CI/CD。
+**周目标**：把工作流封装成可使用的应用，并让用户理解和干预执行过程。
 
-## Day 71：评测体系
+**周产物**：FastAPI + 最小运行控制台。
 
-- **目标**：区分确定性测试、轨迹评测、结果评测和人工评测。
-- **操作**：建立 30 条综合数据集；定义任务成功、工具正确、引用正确、构建成功等指标。
-- **作业**：为每个指标写通过条件和反作弊说明。
+## Day 71：API 契约
 
-## Day 72：轨迹与可观察性
+- **学习**：定义 thread、run、input、status、error 和 final output。
+- **产物**：启动运行、查询状态、恢复中断三个 API。
 
-- **目标**：从一次请求定位到模型、节点、工具和错误。
-- **操作**：统一 trace_id/run_id/tool_call_id；记录耗时、Token、成本、重试和状态转移。
-- **作业**：仅凭 trace 复盘一个失败；D1 复习。
+## Day 72：事件模型
 
-## Day 73：延迟优化
+- **学习**：区分 token、node update、tool call、A2A task/artifact、interrupt、error 和 end。
+- **产物**：带版本号的事件联合类型。
 
-- **目标**：分析首 Token、总时长和关键路径。
-- **操作**：测量模型、检索、工具、构建各阶段；并行无依赖任务；缓存稳定结果。
-- **作业**：提交前后对比，至少优化一个 P95 指标。
+## Day 73：SSE
 
-## Day 74：成本与上下文工程
+- **学习**：事件 ID、完成信号、断线与重连。
+- **产物**：把 LangGraph stream 转成 SSE，并用 `curl` 验证。
 
-- **目标**：用摘要、检索和文件按需加载控制成本。
-- **操作**：记录每任务成本；比较全量上下文与按需上下文；设置预算终止。
-- **作业**：在质量下降不明显的前提下降低一次基准任务成本；D3 复习 Day 71。
+## Day 74：最小控制台
 
-## Day 75：安全
+- **任务**：用现有前端能力显示计划、当前节点、工具调用、外部 Agent 状态、错误和最终报告。
+- **产物**：只做运行可视化，不扩展成复杂聊天产品。
 
-- **目标**：覆盖 Prompt Injection、数据泄露、危险命令、依赖风险和 SSRF。
-- **操作**：建立红队输入；隔离不可信内容；敏感工具审批；密钥脱敏；网络 allowlist。
-- **作业**：完成 15 条攻击测试及结果。
+## Day 75：人工确认 UI
 
-## Day 76：并发、限流与降级
+- **任务**：实现接受、修改、拒绝计划并恢复同一 thread。
+- **产物**：三条交互路径和状态一致性测试。
 
-- **目标**：在资源有限时保持可用。
-- **操作**：加入用户/模型限流、队列上限、超时、熔断和 fallback；模拟并发请求。
-- **作业**：写负载结果和降级策略，不以平均延迟替代 P95/P99。
+## Day 76：取消与重连
 
-## Day 77：周复习与大作业 11
+- **学习**：用户取消、重复事件、刷新恢复和服务端事实来源。
+- **产物**：取消和重连测试，证明不会重复副作用。
 
-- **目标**：用评测、追踪、性能与安全证据证明系统具备工程可信度。
-- **大作业**：为前 10 周系统建立 CI 评测：单测、Agent 数据集、攻击测试和性能冒烟；生成报告。
-- **验收**：每次变更可比较基线；失败能定位；有预算和并发保护；日志无敏感信息。
-- **复习**：D30 复习第 6 周流式 UI，从事件样本重建 reducer。
+## Day 77：周项目
+
+- **任务**：完成可演示的 Agent 工作流应用。
+- **验收**：刷新后能恢复；错误不导致空白；用户能看到计划、工具、进度和最终结果。
 
 ---
 
-# 第 12 周：综合项目、作品集与面试表达
+# 第 12 周：最终项目与独立重建
 
-**周目标**：交付一个与招聘要求直接对齐的作品，而不是教程拼接。  
-**最终项目**：AI Native App Builder。  
-**功能链路**：prompt → clarify → plan → tool call → code edit → diff approval → sandbox build → preview → error fix → checkpoint/version → deploy（部署可使用模拟器，真实发布必须手动批准）。
+**周目标**：证明自己能独立设计 Agent 和工作流，而不是依赖教程或 DeerFlow 源码。
 
-## Day 78：范围冻结与 ADR
+**周产物**：自定义 Agent + 自定义 Agent 工作流 v1.0。
 
-- **目标**：限定 MVP，防止最后一周失控。
-- **操作**：写用户故事、非目标、架构图、状态模型、事件协议和风险；拆成 6 个垂直切片。
-- **作业**：3 分钟讲清“用户问题、方案、为何用 LangGraph/DeerFlow 思想”。
+## Day 78：冻结范围
 
-## Day 79：主链路打通
+- **任务**：确定目标用户、一个核心场景、输入输出、非目标和验收指标。
+- **产物**：最终 PRD、架构图和 ADR 清单。
 
-- **目标**：端到端完成最薄的一条成功路径。
-- **操作**：输入需求→生成一个文件→展示 Diff→构建→预览；暂不追求复杂 UI。
-- **作业**：保存演示录屏和 trace；D1 复习。
+## Day 79：从空目录搭骨架
 
-## Day 80：规划、工具与 RAG
+- **任务**：不复制旧项目，重建 State、节点接口、DeerFlow Agent 适配器和测试框架。
+- **产物**：可运行的空工作流和第一批测试。
 
-- **目标**：加入需求澄清、任务计划和组件知识检索。
-- **操作**：实现 planner；接入团队组件 RAG/MCP；显示证据和任务进度。
-- **作业**：用 5 个需求检查规划质量和检索正确性。
+## Day 80：主链路
 
-## Day 81：审批、恢复与版本
+- **任务**：打通 coordinator → planner → 本地 DeerFlow Agent / 外部 A2A Agent → reviewer → reporter。
+- **产物**：一次成功运行及完整 trace。
 
-- **目标**：实现可信的关键控制点。
-- **操作**：Diff 审批；checkpoint 恢复；方案分支；失败后继续；记录版本。
-- **作业**：完成崩溃恢复和拒绝修改演练；D3 复习 Day 78。
+## Day 81：控制能力
 
-## Day 82：自修复、评测与安全
+- **任务**：加入人工确认、checkpoint、恢复、有限返工，以及远端超时、取消和降级策略。
+- **产物**：故障注入记录和恢复测试。
 
-- **目标**：完成失败闭环并验证边界。
-- **操作**：构建错误修复；运行综合评测和攻击集；修复最高风险问题。
-- **作业**：生成质量报告，诚实列出仍失败的案例。
+## Day 82：评测与修复
 
-## Day 83：作品集包装
+- **任务**：运行 20 条以上评测，修复影响最大的失败类型。
+- **产物**：最终结果/轨迹/延迟/成本报告。
 
-- **目标**：让面试官 5 分钟内看懂价值与深度。
-- **操作**：完善 README、架构图、GIF/视频、快速启动、技术决策、指标、已知限制；清理密钥和临时代码。
-- **作业**：写 5 个 STAR 故事：流式状态、恢复、沙箱安全、RAG 评测、性能优化。
+## Day 83：文档与演示
 
-## Day 84：最终答辩与大作业 12
+- **任务**：完善 README、架构图、启动方式、设计取舍、已知限制和演示脚本。
+- **产物**：5～8 分钟演示，清楚解释哪些设计来自 DeerFlow、哪些是自己的取舍。
 
-- **目标**：在未知需求变化和故障注入下证明最终系统可用、可控、可信、可恢复。
-- **大作业**：完整演示 App Builder，并接受一次临时需求修改和一次故障注入。
-- **验收**：
-  - 用户能看到计划、工具、进度和错误；
-  - 写文件/部署有审批；
-  - 流式断线可恢复；
-  - 构建失败最多有限次数自修复；
-  - RAG 回答有引用；
-  - 沙箱与路径有边界；
-  - 至少 30 条评测可重复执行；
-  - README 能让他人启动；
-  - 有性能、成本、安全与已知限制报告。
-- **终期复习**：随机抽 30 张卡片；闭卷画完整架构；回答“什么时候只用 LangChain、什么时候用 LangGraph、DeerFlow 给了你哪些生产启发”。
+## Day 84：闭卷终测
+
+- **任务**：限时 2 小时，从空目录实现两工具 Agent、含分支/循环/审批的最小工作流，并接入一个 mock A2A Agent。
+- **验收**：能运行、有测试、循环可终止、远端失败可处理、写操作需批准、执行过程可观察。
 
 ---
 
-## 6. 最终项目建议架构
+## 5. 最终项目建议架构
 
 ```mermaid
-flowchart LR
-    U[React / TypeScript UI] -->|SSE + REST| G[FastAPI Gateway]
-    G --> LG[LangGraph Lead Agent]
-    LG --> P[Planner]
-    LG --> R[RAG / MCP]
-    LG --> C[Coding Subagent]
-    LG --> T[Tool Registry]
-    T --> F[Workspace / Diff]
-    T --> S[Sandbox Build]
-    T --> M[Multimodal Tools]
-    LG --> CP[(Checkpoint / Store)]
-    S --> A[Preview / Artifacts]
-    G -->|events| U
+flowchart TD
+    U[User / Minimal UI] --> API[FastAPI / CLI]
+    API --> C[Coordinator]
+    C -->|direct answer| END[Final Output]
+    C -->|complex task| P[Planner]
+    P --> H[Human Feedback]
+    H -->|edit| P
+    H -->|accept| E[Step Router]
+    E --> DFA[DeerFlow Custom Agent]
+    E --> AC[A2A Client]
+    AC --> RA[External A2A Agent]
+    RA --> AC
+    AC --> E
+    E --> N[Deterministic Node]
+    DFA --> E
+    N --> E
+    PA[Partner A2A Client] --> AS[A2A Server]
+    AS --> DFA
+    E -->|steps complete| V[Reviewer]
+    V -->|needs revision and budget remains| P
+    V -->|pass or budget exhausted| RP[Reporter]
+    RP --> END
+    API -. checkpoint / resume .-> CP[(Checkpointer)]
+    API -. stream events .-> U
 ```
 
-前端至少包含以下状态域：
+建议 State 只保存工作流需要的原始事实和控制信息：
 
-- thread / run / checkpoint；
-- messages / streaming chunks；
-- plan / tasks；
-- tool calls / approvals；
-- files / editor buffers / diffs；
-- sandbox / build logs / preview；
-- artifacts / deploy versions；
-- errors / retry / cancellation。
+- messages、user_request、locale；
+- current_plan、plan_iterations；
+- current_step、step_results、evidence；
+- remote_agent、remote_task_ids、artifacts；
+- review_result、retry_count、errors；
+- final_report。
+
+Prompt 文本、格式化后的上下文和临时客户端对象应在节点内按需构造，不要全部塞进 State。
 
 ---
 
-## 7. 每周自评量表
+## 6. 每周验收量表
 
-每周日按 0～2 分打分，总分 16 分；低于 12 分，不要盲目进入下一周，先补最弱项。
+每周日按 0～2 分评分，总分 16 分。低于 12 分时先补最弱项，再进入下一周。
 
 | 项目 | 0 分 | 1 分 | 2 分 |
 |---|---|---|---|
-| 概念 | 不能解释 | 看笔记能解释 | 能用例子和反例闭卷解释 |
-| 编码 | 未运行 | 跟做可运行 | 可从空目录重建 |
+| 概念 | 不能解释 | 看笔记能解释 | 能用例子与反例闭卷解释 |
+| 编码 | 未运行 | 跟做可运行 | 能从空目录重建 |
 | 测试 | 无测试 | 只有成功路径 | 有失败、边界和回归 |
-| 可观察性 | 看最终答案 | 有日志 | 能由 trace 定位失败 |
-| 安全 | 未考虑 | 有零散校验 | 有威胁模型和自动测试 |
-| 产品体验 | 仅 Demo | 主流程可用 | 失败、取消、恢复均清晰 |
+| 工作流 | 只看最终答案 | 能看到节点 | 能解释 State 和每次路由 |
+| 可靠性 | 无限制 | 有零散重试 | 有预算、终止、恢复和幂等 |
+| 源码理解 | 只读 README | 能找到入口 | 能追踪请求并评价取舍 |
 | 文档 | 无 | 有启动说明 | 有架构、决策、指标和限制 |
-| 迁移能力 | 只会原例 | 能改参数 | 能用于新的业务问题 |
+| 迁移能力 | 只会原例 | 能修改参数 | 能替换成新的业务场景 |
 
 ---
 
-## 8. 岗位能力覆盖检查表
+## 7. 最终能力检查表
 
-完成计划后，应能拿作品或代码回答下列问题：
-
-- [ ] Prompt、结构化输出、Tool Calling、Agent Loop 分别解决什么？
-- [ ] 如何判断用 LangChain Agent、LangGraph 工作流还是更高层 Agent Harness？
-- [ ] 如何设计 RAG 的切分、检索、引用、拒答和评测？
-- [ ] 如何实现条件分支、循环、并行、子图、持久化和 Human-in-the-loop？
-- [ ] 如何防止断点恢复后重复执行写文件或部署？
-- [ ] 如何通过 SSE 把 token、工具、状态和错误映射到 React UI？
-- [ ] 如何处理乱序、重复、重连和多状态一致性？
-- [ ] MCP、Tool、Skill、Subagent、A2A 的边界是什么？
-- [ ] DeerFlow 的请求、运行、Middleware、Sandbox、Skills/MCP 路径是什么？
-- [ ] 如何实现文件树、Monaco buffer、Diff、终端日志和预览的一致性？
-- [ ] 如何建立 build error → 定位 → patch → rebuild 的有限自修复循环？
-- [ ] 如何评测 Agent 的结果、轨迹、延迟、成本和安全？
-- [ ] 如何在高并发下进行限流、排队、超时、降级和取消？
-- [ ] 如何讲清一个 AI Native 产品为何“可控、可信、可恢复”？
+- [ ] 能解释模型调用、链、Agent 和 Workflow 的边界。
+- [ ] 能手写最小 Agent Loop，并说明框架代劳了什么。
+- [ ] 能为工具设计 schema、错误、安全边界和测试。
+- [ ] 能设计 LangGraph State，并正确选择覆盖或 reducer。
+- [ ] 能使用静态边、条件边、Command、Send 和有限循环。
+- [ ] 能把自定义 Agent 作为工作流节点，而不是把所有逻辑塞进一个 Prompt。
+- [ ] 能实现 checkpoint、thread、interrupt、resume 和 streaming。
+- [ ] 能解释 DeerFlow 2.0 的 Lead Agent、ThreadState、Middleware、Skills、Subagents、Memory 和 Sandbox。
+- [ ] 能基于 DeerFlow Harness 配置并扩展一个自定义 Agent。
+- [ ] 能说明 DeerFlow 2.0 与 `main-1.x` 的架构差异，以及 Harness 与显式 StateGraph 的边界。
+- [ ] 能解释 A2A 与 MCP、Tool、内部 Subagent 的边界。
+- [ ] 能读取并校验 Agent Card，通过 A2A Client 调用外部 Agent。
+- [ ] 能把 DeerFlow 自定义 Agent 暴露为 A2A Server，处理 Task、Artifact、流式和取消。
+- [ ] 能处理远端 Agent 的认证、超时、重复请求、版本不兼容和不可信结果。
+- [ ] 能用节点、路由、端到端和评测集四层证据验证系统。
+- [ ] 能从空目录完成一个自定义 Agent 和一条自定义 Agent 工作流。
 
 ---
 
-## 9. 学习资料选择原则
+## 8. 参考资料
 
-1. LangChain/LangGraph 以当前官方文档和当前安装版本 API 为准，优先学习 `create_agent`、StateGraph、streaming、persistence、human-in-the-loop 和 RAG。
-2. DeerFlow 以当前仓库 README、架构文档、API 文档和实际源码为准；项目演进快，不依赖旧博客记忆架构。
-3. MCP 以官方协议文档和 SDK 示例为准，先本地只读工具，再逐步开放副作用。
-4. 每阅读一个教程，都要改变输入、加入失败场景、补测试并写自己的解释；复制运行不计入掌握。
-5. AI Coding 工具可用于解释报错和代码审查，但每日核心练习至少有一部分必须闭卷完成。
+优先级固定为：当前安装版本的官方文档 → 指定 DeerFlow commit 的源码 → 其他教程。
 
-参考入口：
-
-- [LangChain Agents](https://docs.langchain.com/oss/python/langchain/agents)
 - [LangGraph Overview](https://docs.langchain.com/oss/python/langgraph/overview)
+- [LangGraph Graph API](https://docs.langchain.com/oss/python/langgraph/graph-api)
+- [LangGraph Persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [LangGraph Interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts)
 - [LangGraph Streaming](https://docs.langchain.com/oss/python/langgraph/streaming)
-- [LangGraph Agentic RAG](https://docs.langchain.com/oss/python/langgraph/agentic-rag)
-- [DeerFlow GitHub](https://github.com/bytedance/deer-flow)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [LangChain Agents](https://docs.langchain.com/oss/python/langchain/agents)
+- [DeerFlow 官方仓库](https://github.com/bytedance/deer-flow)
+- [DeerFlow Backend Architecture](https://github.com/bytedance/deer-flow/blob/main/backend/docs/ARCHITECTURE.md)
+- [DeerFlow Lead Agent](https://github.com/bytedance/deer-flow/blob/main/backend/packages/harness/deerflow/agents/lead_agent/agent.py)
+- [DeerFlow ThreadState](https://github.com/bytedance/deer-flow/blob/main/backend/packages/harness/deerflow/agents/thread_state.py)
+- [DeerFlow Middleware](https://github.com/bytedance/deer-flow/tree/main/backend/packages/harness/deerflow/agents/middlewares)
+- [DeerFlow Subagents](https://github.com/bytedance/deer-flow/tree/main/backend/packages/harness/deerflow/subagents)
+- [DeerFlow Skills](https://github.com/bytedance/deer-flow/tree/main/backend/packages/harness/deerflow/skills)
+- [A2A Protocol](https://a2a-protocol.org/latest/)
+- [A2A Specification](https://a2a-protocol.org/latest/specification/)
+- [A2A Python SDK](https://github.com/a2aproject/a2a-python)
+- [A2A Samples](https://github.com/a2aproject/a2a-samples)
+
+阅读源码时，每次回答五个问题：
+
+1. 输入和运行上下文是什么？
+2. 更新了哪些 State 或模型请求？
+3. 它运行在图节点、Middleware hook、Tool 还是 Runtime 哪一层？
+4. 它获得了哪些工具、文件和外部系统权限？
+5. 失败、重试、预算和终止条件是什么？
 
 ---
 
-## 10. 开始前和结束后的能力对比
+## 9. 立即执行清单
 
-### 开始前基线任务
+- [ ] 保留并完成当前第 1 周产物，不因计划更新而重做已掌握内容。
+- [ ] 在 `capstone/README.md` 写下最终项目的一句话目标。
+- [ ] 创建 `notes/version-differences.md`，记录 DeerFlow 2.0 commit、Harness 版本与本地 LangGraph 版本。
+- [ ] 为第 2 周选择 3 个只读工具。
+- [ ] 为第 9 周选择一个受控的外部 Agent 或官方 A2A 示例，并记录协议与 SDK 版本。
+- [ ] 在日历中固定每周一次演示和复盘。
 
-限时 2 小时完成：
-
-> 输入一个前端需求，让模型返回任务列表，并提供一个读取本地文件的工具。
-
-记录：完成度、代码结构、失败处理、测试、Token/成本、你无法解释的部分。
-
-### 第 84 天终测
-
-仍限时 2 小时，从空目录完成：
-
-> 构建一个可调用两个工具、流式显示过程、写操作需审批、失败可重试且有最大步数的 Agent。
-
-比较基线和终测，不只比较代码量，还比较：
-
-- 是否能解释状态和执行路径；
-- 是否有清晰的错误与安全边界；
-- 是否可测试、可观察、可恢复；
-- 是否能把执行过程转化为可信的用户体验。
-
----
-
-## 11. 第一周立即执行清单
-
-不要等“准备充分”才开始：
-
-- [ ] 创建 `agent-learning` 仓库和建议目录。
-- [ ] 完成 Day 1 基线任务并计时。
-- [ ] 建立 `notes/cards.md`，写第一批记忆卡。
-- [ ] 在日历中固定每天 2 小时。
-- [ ] 创建周日演示提醒。
-- [ ] 选择一个小型 React 项目作为前 6 周的统一实验材料。
-- [ ] 为最终项目建立 `capstone/README.md`，每周只更新理解和决策，暂不提前堆功能。
-
-坚持的判据不是连续打卡，而是每周都有：**可运行代码、失败案例、测试、费曼解释和一个可演示产物**。
+坚持的判据不是连续打卡，而是每周都有：**可运行代码、失败案例、自动化测试、闭卷解释和可演示产物**。
