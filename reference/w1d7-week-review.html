@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D7 · 第一周链路速查</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Reference · Week 1</p>
+  <h1>需求澄清链路速查</h1>
+  <p class="lead">完成闭卷题后再看。区分当前代码已经实现的能力，与完整 CLI 仍需补齐的能力。</p>
+
+  <h2>数据与职责</h2>
+  <pre>用户文本
+  → validate_requirement：拒绝空输入
+  → build_structured_prompt：描述输出契约
+  → call_model：获取模型文本
+  → extract_json_block：提取候选 JSON
+  → json.loads：解析 JSON 语法
+  → Requirement.model_validate：验证字段与约束
+  → RequirementResult：保存结果与尝试记录
+  → 交互层：展示、收集补充信息、请求确认</pre>
+  <p><code>request_requirement</code> 组织模型调用、解析和结构化输出失败后的有界修复重试；它不负责终端输入，也不负责用户确认。</p>
+  <p>默认 <code>max_attempts=3</code> 表示最多调用模型三次，包含首次调用，因此最多再修复两次。格式校验成功就提前结束。</p>
+
+  <h2>错误边界</h2>
+  <table>
+    <thead><tr><th>现象</th><th>当前代码中的处理</th></tr></thead>
+    <tbody>
+      <tr><td>空白输入</td><td><code>validate_requirement</code> 抛出 <code>ValueError</code>；不应调用模型。</td></tr>
+      <tr><td>无 JSON 或 JSON 语法错误</td><td><code>parse_requirement</code> 转为 <code>StructuredOutputError</code>，<code>request_requirement</code> 用 repair prompt 有界重试。</td></tr>
+      <tr><td>合法 JSON，但缺少必填字段</td><td>Pydantic 校验失败，转为 <code>StructuredOutputError</code>，再进入有界重试。</td></tr>
+      <tr><td>模型请求超时或网络错误</td><td>当前 <code>request_requirement</code> 不捕获 <code>call_model</code> 抛出的异常；完整 CLI 的用户提示与网络重试尚未实现。</td></tr>
+      <tr><td>没有待确认问题</td><td>仍需用户确认；<code>decide_next_step</code> 将其视为待确认草稿。</td></tr>
+    </tbody>
+  </table>
+
+  <h2>证据边界</h2>
+  <p>单元测试通过，能证明被测试的纯函数与结构化输出流程在这些输入下符合预期；不能证明终端交互、真实模型网络调用、异常用户提示或陌生输入的端到端运行。</p>
+  <p>检查第 1 周交付时，分别记录“已通过”“未通过”“缺证据”。没有做过的运行，不写成成功。</p>
+
+  <p><a href="../lessons/0006-w1d7-week-review.html">返回 W1D7 课程</a> · <a href="prompt-contract.html">Prompt 契约速查</a></p>
+</main>
+</body>
+</html>

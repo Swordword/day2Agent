@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>W1D7 · 第一周复习</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Week 1 · Day 7 · 约 2 小时</p>
+  <h1>从模型调用到可验证的需求澄清</h1>
+  <p class="lead">今天只复习第一周，不学习新框架。用闭卷解释、运行证据和失败案例，判断哪些能力已经掌握，哪些仍是已知限制。</p>
+
+  <section class="card">
+    <p class="meta">本次验收</p>
+    <ul class="checklist">
+      <li>闭卷画出用户输入到结构化结果的完整链路</li>
+      <li>能区分输入错误、模型调用错误、解析错误和业务状态错误</li>
+      <li>对照助手提供的第一周测试结果，说明覆盖范围与未覆盖范围</li>
+      <li>写出启动说明、执行示例和本周已知限制</li>
+    </ul>
+  </section>
+
+  <h2>1. 闭卷检索（20 分钟）</h2>
+  <p>先不看代码、笔记和速查表，回答以下四题。把答案发给我，我会逐题反馈。可先填入 <a href="../notes/W1D7.md">W1D7 学习笔记</a>。</p>
+  <ol>
+    <li>从用户输入需求到最终确认，画出至少六个步骤，并标出一次可能的重试。</li>
+    <li><code>validate_requirement</code>、<code>request_requirement</code>、<code>Requirement.model_validate</code> 各负责什么？谁负责和终端交互？</li>
+    <li>模型返回合法 JSON，但缺少 <code>tasks</code>。这属于哪一类失败？应该由哪一层处理？</li>
+    <li><code>open_questions</code> 为空时，为什么仍不能直接将草稿标记为最终结果？</li>
+  </ol>
+
+  <h2>2. 对照代码与测试（25 分钟）</h2>
+  <p>核对 <a href="../labs/w1d5/pipeline.py">W1D5 结构化输出流程</a>、<a href="../labs/w1d6/cli.py">W1D6 纯函数</a>。测试由助手维护和运行，以下命令供你理解和复现：</p>
+  <pre>uv run pytest labs/w1d1 labs/w1d2 labs/w1d3 labs/w1d4 labs/w1d5 labs/w1d6 -q</pre>
+  <p>助手于 2026-09-28 验证：57 项测试全部通过。用两句话说明：这些测试证明了什么？它们为什么还不能证明完整的终端 CLI 已经可运行？</p>
+  <p>答完第一节后，用 <a href="../reference/w1d7-week-review.html">第一周链路速查</a> 校对职责与错误边界。不要把当前未实现的模型超时处理写成已完成。</p>
+
+  <h2>3. 失败情景复盘（25 分钟）</h2>
+  <table>
+    <thead><tr><th>情景</th><th>你的判断</th></tr></thead>
+    <tbody>
+      <tr><td>输入只有空格</td><td>在哪一层拒绝？是否调用模型？</td></tr>
+      <tr><td>模型请求超时</td><td>谁记录错误？是否重试？</td></tr>
+      <tr><td>返回有效 JSON，但字段不满足 schema</td><td>谁校验？何时修复？</td></tr>
+      <tr><td>草稿没有问题，但用户要求修改</td><td>状态应如何变化？</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. 第一周交付复盘（40 分钟）</h2>
+  <p>为第一周产物补一份简短 README，可直接写在学习笔记中：运行环境、测试命令、已实现功能、一条函数级输入与输出示例、已知限制。完整 CLI 未接通时，不能把函数级示例写成终端运行示例。</p>
+  <p>再写一段不超过 150 字的费曼解释：为什么需求澄清程序需要把交互层、业务状态层和模型适配层分开？</p>
+
+  <h2>5. 周验收（10 分钟）</h2>
+  <p>用“已通过 / 未通过 / 缺证据”标记：陌生输入可运行、异常有明确提示、代码中没有密钥。完整 CLI 尚未接通属于已知限制，先记录，不回头追加 W1D6 功能。评分将在提交答案后写入 <a href="../assessments/W1D7.md">W1D7 评估</a>。</p>
+
+  <h2>首选资料</h2>
+  <ul>
+    <li><a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic Models 官方文档</a>：运行时 schema 校验。</li>
+    <li><a href="https://docs.python.org/3/howto/logging.html">Python Logging HOWTO</a>：区分用户提示与开发日志。</li>
+  </ul>
+  <p>做完第一节先把答案发给我；遇到不确定的地方也写出你的推理，我会根据答案安排下一轮。</p>
+  <p><a href="0005-w1d6-minimal-cli.html">返回 W1D6</a> · <a href="../reference/prompt-contract.html">Prompt 契约速查</a></p>
+</main>
+</body>
+</html>
